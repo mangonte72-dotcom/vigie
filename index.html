@@ -1117,14 +1117,15 @@ async function authSend() {
   AUTH.email = email; AUTH.busy = true; AUTH.msg = ''; render(true);
   const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
   AUTH.busy = false;
-  if (error) { AUTH.msg = /rate|limit|seconds/i.test(error.message) ? 'Trop de demandes : patientez une minute avant de redemander un code.' : 'Envoi du code impossible : ' + error.message; return render(true); }
+  if (error) { AUTH.msg = /rate|limit|seconds/i.test(error.message) ? 'Limite d’envoi atteinte : le service d’e-mails n’envoie que 2 messages par heure. Utilisez le dernier e-mail reçu (lien ou code), ou réessayez dans une heure.' : 'Envoi du code impossible : ' + error.message; return render(true); }
   AUTH.step = 'code'; AUTH.msg = 'Code envoyé. Regardez votre boîte mail (et les indésirables).'; render(true);
 }
 async function authVerify() {
   const token = (($('#authCode') || {}).value || '').replace(/\s/g, '');
   if (!/^\d{6,10}$/.test(token)) { AUTH.msg = 'Saisissez le code à chiffres reçu par e-mail.'; return render(true); }
   AUTH.busy = true; AUTH.msg = ''; render(true);
-  const { data, error } = await sb.auth.verifyOtp({ email: AUTH.email, token, type: 'email' });
+  let { data, error } = await sb.auth.verifyOtp({ email: AUTH.email, token, type: 'email' });
+  if (error || !data || !data.session) { const r2 = await sb.auth.verifyOtp({ email: AUTH.email, token, type: 'signup' }); if (!r2.error && r2.data && r2.data.session) { data = r2.data; error = null; } }
   AUTH.busy = false;
   if (error || !data.session) { AUTH.msg = 'Code incorrect ou expiré. Demandez un nouveau code.'; return render(true); }
   afterLogin(data.session);
