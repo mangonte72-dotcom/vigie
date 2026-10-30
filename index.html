@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1A4FE0">
+<meta name="description" content="Vigie : prévention des accidents sur site pétrochimique">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vigie">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Vigie Terrain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one phone-width column, content cards on a cool ground, fixed bottom tab bar with a raised Scanner button. */
+:root{
+  --bg:#F4F6FA; --surface:#FFFFFF; --surface-2:#EEF2F7; --line:#E3E8EF; --line-strong:#C5CEDA;
+  --fg:#0F1B2D; --muted:#566578;
+  --accent:#1A4FE0; --accent-fg:#FFFFFF; --accent-soft:#E8EEFF; --accent-ink:#123AA8;
+  --danger:#D92D20; --danger-on:#FFFFFF; --danger-soft:#FEECEB; --danger-ink:#A3170F;
+  --high-soft:#FFE6D5; --high-ink:#8A3300; --warn-soft:#FFF4D6; --warn-ink:#7A4B00;
+  --ok:#17663A; --ok-on:#FFFFFF; --ok-soft:#E3F5EA; --ok-ink:#17663A;
+  --shadow:0 1px 2px rgba(15,27,45,.06),0 6px 18px rgba(15,27,45,.05);
+  --display:"Manrope",ui-sans-serif,system-ui,sans-serif;
+  --body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1320; --surface:#141D2C; --surface-2:#1B2638; --line:#263247; --line-strong:#3A4860;
+  --fg:#E8EDF5; --muted:#9AA8BC;
+  --accent:#7A9DFF; --accent-fg:#0C1320; --accent-soft:#1C2A4D; --accent-ink:#B4C8FF;
+  --danger:#F0574B; --danger-on:#1A0705; --danger-soft:#3A1A1A; --danger-ink:#FFB4AC;
+  --high-soft:#3D2414; --high-ink:#FFBE8F; --warn-soft:#3A2E10; --warn-ink:#F5D07A;
+  --ok:#44C07A; --ok-on:#06170D; --ok-soft:#14301F; --ok-ink:#8FDBA9;
+  --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1320; --surface:#141D2C; --surface-2:#1B2638; --line:#263247; --line-strong:#3A4860;
+  --fg:#E8EDF5; --muted:#9AA8BC;
+  --accent:#7A9DFF; --accent-fg:#0C1320; --accent-soft:#1C2A4D; --accent-ink:#B4C8FF;
+  --danger:#F0574B; --danger-on:#1A0705; --danger-soft:#3A1A1A; --danger-ink:#FFB4AC;
+  --high-soft:#3D2414; --high-ink:#FFBE8F; --warn-soft:#3A2E10; --warn-ink:#F5D07A;
+  --ok:#44C07A; --ok-on:#06170D; --ok-soft:#14301F; --ok-ink:#8FDBA9;
+  --shadow:none; color-scheme:dark}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:26px;font-weight:800;line-height:1.15}
+h2{font-size:17px;font-weight:800}
+h3{font-size:15px;font-weight:700}
+a{color:var(--accent)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 120px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;flex:0 0 auto}
+.brand b{font-family:var(--display);font-size:18px;font-weight:800;display:block}
+.brand small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--fg);text-decoration:none;flex:0 0 auto}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack-s{display:flex;flex-direction:column;gap:8px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tiny{font-size:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.card.flush{padding:0;overflow:hidden}
+.list>*+*{border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;min-height:60px;text-decoration:none;color:inherit;background:none;border:0;width:100%;text-align:left}
+.row .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row strong{font-size:14px;line-height:1.3}
+.score{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.lv-crit{background:var(--danger);color:var(--danger-on)}
+.lv-high{background:var(--high-soft);color:var(--high-ink)}
+.lv-mod{background:var(--warn-soft);color:var(--warn-ink)}
+.lv-low{background:var(--ok-soft);color:var(--ok-ink)}
+.lv-done{background:var(--surface-2);color:var(--muted)}
+.lv-info{background:var(--accent-soft);color:var(--accent-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin-inline:-2px}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);font-size:13px;font-weight:500;white-space:nowrap;flex:0 0 auto}
+.chip[aria-pressed="true"]{border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.chip.red[aria-pressed="true"]{border-color:var(--danger);background:var(--danger-soft);color:var(--danger-ink)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:14px;background:var(--surface-2)}
+.seg button{min-height:40px;border:0;border-radius:10px;background:transparent;font-size:14px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 3px rgba(15,27,45,.12)}
+.btn{min-height:48px;padding:0 18px;border-radius:14px;border:1px solid var(--line-strong);background:var(--surface);font-size:15px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--danger-on)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:var(--ok-on)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+.btn.sm{min-height:40px;padding:0 12px;font-size:13px;border-radius:11px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn.block{width:100%}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font-size:14px;font-weight:600}
+.input{min-height:46px;padding:0 12px;border-radius:12px;border:1px solid var(--line-strong);background:var(--surface);font-size:15px;width:100%}
+textarea.input{padding:12px;min-height:96px;resize:vertical;line-height:1.45}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.grid4 .chip{padding:0 4px;white-space:normal;line-height:1.15;min-height:44px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.kpi b{font-family:var(--display);font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted);line-height:1.3}
+.action{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:110px;text-decoration:none;color:var(--fg)}
+.action .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+.action strong{font-size:15px;display:block}
+.action small{font-size:12px;color:var(--muted)}
+.sos-card{display:flex;align-items:center;gap:16px;padding:18px;border-radius:22px;background:var(--danger);color:var(--danger-on);text-decoration:none}
+.sos-card .dot{flex:0 0 auto;width:62px;height:62px;border-radius:999px;background:var(--danger-on);color:var(--danger);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px}
+.sos-card b{font-family:var(--display);font-size:18px;display:block}
+.alert{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--danger);color:var(--danger-on)}
+.alert .acts{display:flex;flex-wrap:wrap;gap:8px}
+.alert .btn{background:var(--danger-on);color:var(--danger);border-color:transparent}
+.note{border-radius:14px;padding:12px 14px;font-size:14px}
+.note.ok{background:var(--ok-soft);color:var(--ok-ink)}
+.note.info{background:var(--accent-soft);color:var(--accent-ink)}
+.note.warn{background:var(--warn-soft);color:var(--warn-ink)}
+.note.err{background:var(--danger-soft);color:var(--danger-ink)}
+.redbox{background:var(--danger-soft);border-radius:16px;padding:14px 16px}
+.redbox h3{color:var(--danger-ink)}
+ol,ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+li{font-size:14px}
+.photo{width:100%;aspect-ratio:4/3;max-width:100%;object-fit:cover;border-radius:14px;background:var(--surface-2);display:block}
+.drop{min-height:120px;border-radius:16px;border:2px dashed var(--line-strong);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14px;cursor:pointer;text-align:center;padding:10px}
+.drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.drop:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.check{min-height:56px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:12px;width:100%;text-align:left;font-size:14px}
+.check .box{flex:0 0 auto;width:26px;height:26px;border-radius:8px;border:2px solid var(--line-strong);display:grid;place-items:center;color:transparent}
+.check[aria-checked="true"]{background:var(--ok-soft);border-color:transparent}
+.check[aria-checked="true"] .box{background:var(--ok);border-color:var(--ok);color:var(--ok-on)}
+.bar{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:var(--accent)}
+.hold{position:relative;width:220px;height:220px;border-radius:999px;border:0;background:var(--danger);color:var(--danger-on);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin:18px auto;box-shadow:0 0 0 14px var(--danger-soft);touch-action:none;user-select:none;-webkit-user-select:none}
+.hold b{font-family:var(--display);font-size:46px;font-weight:800;letter-spacing:.04em}
+.hold svg.ring{position:absolute;inset:-14px;width:248px;height:248px;transform:rotate(-90deg);pointer-events:none}
+.hold svg.ring circle{fill:none;stroke:var(--fg);stroke-width:6;stroke-dasharray:747;stroke-dashoffset:747}
+.hold.holding svg.ring circle{transition:stroke-dashoffset 1.5s linear;stroke-dashoffset:0}
+.numrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;min-height:64px}
+.numrow .n{font-family:var(--display);font-weight:800;font-size:22px;color:var(--danger);font-variant-numeric:tabular-nums;user-select:all}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding:8px max(6px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+.tabbar .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:50px;text-decoration:none;font-size:11px;font-weight:600;color:var(--muted)}
+.tab[aria-current="page"]{color:var(--accent)}
+.tab .fab{width:54px;height:54px;margin-top:-24px;border-radius:999px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;box-shadow:0 8px 18px rgba(26,79,224,.35)}
+.qr{width:96px;height:96px;image-rendering:pixelated;border-radius:8px;background:#FFFFFF;padding:6px}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);font-size:14px}
+.sep{height:1px;background:var(--line)}
+.hier .n{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:14px;flex:0 0 auto}
+.slideimg{display:block;width:100%;aspect-ratio:16/9;max-width:100%;object-fit:cover;border-radius:14px;background:var(--surface-2);box-shadow:var(--shadow)}
+.dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.dots button{width:28px;height:28px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);font-size:11px;font-weight:600;color:var(--muted);padding:0}
+.dots button[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.stopcard{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:22px;background:#F2B705;color:#111A2B;text-decoration:none}
+.stopcard .oct{flex:0 0 auto;width:58px;height:58px;display:grid;place-items:center}
+.stopcard b{font-family:var(--display);font-size:18px;display:block}
+.tracker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+.tracker span{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;line-height:1.15;text-align:center;color:var(--muted)}
+.tracker i{width:26px;height:26px;border-radius:999px;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:12px;background:var(--surface-2);color:var(--muted);border:2px solid var(--line-strong)}
+.tracker .done i{background:var(--ok);color:var(--ok-on);border-color:var(--ok)}
+.tracker .next i{border-color:var(--accent);color:var(--accent)}
+.tracker .done{color:var(--fg)}
+.present{position:fixed;inset:0;z-index:60;background:#0B111C;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.present img{max-width:100%;max-height:calc(100% - 64px);object-fit:contain}
+.present .bar2{display:flex;gap:10px;align-items:center;justify-content:center;padding:10px;color:#E8EDF5;font-size:14px}
+.present .bar2 button{min-height:44px;min-width:44px;border-radius:12px;border:1px solid #3A4860;background:#141D2C;color:#E8EDF5;font-weight:600;padding:0 14px}
+.present .zone{position:absolute;top:0;bottom:64px;width:40%;background:transparent;border:0}
+@media (prefers-reduced-motion: reduce){.hold.holding svg.ring circle{transition:none}}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px)}</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="top">
+    <a class="brand" href="#accueil" style="text-decoration:none;color:inherit">
+      <span class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>
+      <span style="min-width:0"><b>Vigie</b><small id="siteName">Prévention des accidents</small></span>
+    </a>
+    <a class="iconbtn" href="#reglages" aria-label="Réglages du site"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
+  </header>
+  <div id="banner" class="stack"></div>
+  <main id="view" class="stack" aria-live="polite"></main>
+</div>
+
+<nav class="tabbar" aria-label="Navigation principale"><div class="in" id="tabs"></div></nav>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script>
+(() => {
+"use strict";
+/* ---------- Données métier ---------- */
+const D = [
+ {id:'atex',label:'Incendie / ATEX',ex:'Travaux par point chaud, fuites d’hydrocarbures, électricité statique',permis:'Permis de feu + permis de travail, explosimétrie',ref:'Zonage ATEX, DRPCE, étude de dangers',
+  e:['Éviter les travaux par point chaud en zone ATEX : réparer en atelier','Programme d’inspection des brides, joints et garnitures'],c:['Détection gaz et flamme reliée à la salle de contrôle','Matériels certifiés ATEX dans les zones classées','Mise à la terre et liaisons équipotentielles','Déluges et réseau incendie testés'],o:['Permis de feu signé par l’exploitant et l’intervenant','Surveillance pendant et après les travaux','Exercices POI réguliers'],p:['Vêtements antistatiques et ignifugés','Explosimètre portatif'],
+  u:['Alerter le poste de garde ou la salle de contrôle','Déclencher le POI si nécessaire et évacuer','Ne pas attaquer un feu d’hydrocarbures sans formation']},
+ {id:'h2s',label:'Gaz toxique (H₂S)',ex:'Désulfuration, purges, échantillonnage, égouts',permis:'Permis de travail + détecteur individuel obligatoire',ref:'Fiches de données de sécurité, VLEP',
+  e:['Échantillonnage en circuit fermé','Purges vers un réseau fermé'],c:['Détecteurs fixes H₂S avec alarmes','Manches à air visibles depuis toutes les zones','Ventilation des locaux d’analyse'],o:['Formation H₂S et exercices de sauvetage','Travail en binôme sur les unités à risque','S’éloigner perpendiculairement au vent'],p:['Détecteur 4 gaz individuel','Masque auto-sauveteur','ARI pour les interventions'],
+  u:['Ne jamais porter secours sans ARI : risque de sur-accident','S’éloigner perpendiculairement au vent','Victime sortie de la zone : oxygène et appel du 15']},
+ {id:'cmr',label:'Produit CMR (benzène)',ex:'Prélèvements, nettoyage de bacs, ouverture de capacités',permis:'Autorisation d’intervention + consignes CMR',ref:'Règles CMR : substitution en priorité, traçabilité des expositions',
+  e:['Substituer quand c’est techniquement possible','Travailler en système clos'],c:['Captage à la source et ventilation','Zones CMR délimitées et signalées','Mesures d’exposition régulières'],o:['Liste des exposés et suivi médical renforcé','Limiter le nombre de personnes exposées','Habilitation chimique'],p:['Protection respiratoire adaptée','Gants et combinaison étanches','Lunettes étanches'],
+  u:['Retirer les vêtements contaminés, rincer 15 minutes','Consulter la fiche de données de sécurité','Centre antipoison de Marseille : 04 91 75 25 25']},
+ {id:'confine',label:'Espace confiné',ex:'Bacs, colonnes, ballons, fosses, regards',permis:'Permis de pénétrer + bon de consignation',ref:'Plan de prévention si entreprise extérieure',
+  e:['Nettoyer depuis l’extérieur (robots, lances, caméras)','Limiter les entrées au strict nécessaire'],c:['Ventilation forcée pendant toute l’intervention','Mesure d’atmosphère en continu (O₂, explosivité, toxiques)','Trépied et treuil de sauvetage prêts'],o:['Isolement des lignes par joints pleins','Surveillant extérieur permanent','Plan de sauvetage écrit et répété'],p:['Harnais relié au moyen d’extraction','Détecteur 4 gaz','ARI selon l’atmosphère'],
+  u:['Ne pas entrer porter secours sans ARI ni équipier','Déclencher le plan de sauvetage','Extraire la victime au treuil, appeler le 15']},
+ {id:'pression',label:'Pression / vapeur',ex:'Ouverture de brides, purges, vannes, flexibles',permis:'Bon de consignation + permis de travail',ref:'Suivi des équipements sous pression',
+  e:['Décompresser, vidanger et purger avant toute ouverture','Tuyauterie fixe plutôt que flexibles'],c:['Soupapes et sécurités vérifiées','Calorifugeage des lignes chaudes','Écrans aux points de purge'],o:['Consignation avec cadenas personnel','Vérifier l’absence de pression avant ouverture','Plan d’inspection des équipements'],p:['Écran facial et gants anti-chaleur','Vêtements couvrants'],
+  u:['Isoler la fuite à distance si possible','Brûlure : refroidir à l’eau tempérée 15 minutes','Appeler le 15 si la brûlure est étendue']},
+ {id:'elec',label:'Électrique',ex:'Sous-stations, armoires, moteurs, éclairage en zone ATEX',permis:'Habilitation NF C 18-510 + bon de consignation',ref:'Vérifications périodiques des installations',
+  e:['Travailler hors tension','Très basse tension pour l’outillage portatif'],c:['Différentiels 30 mA','Locaux électriques fermés à clé','Matériel adapté aux zones ATEX'],o:['Habilitation électrique à jour','Vérification d’absence de tension'],p:['Gants isolants','Écran facial anti-arc','Outils isolés'],
+  u:['Couper le courant avant de toucher la victime','Appeler le 15 ou le 112','Arrêt cardiaque : massage et défibrillateur']},
+ {id:'hauteur',label:'Travaux en hauteur',ex:'Racks de tuyauteries, colonnes, toits de bacs, échafaudages',permis:'Permis de travail + échafaudage réceptionné',ref:'Protections collectives prioritaires sur les EPI',
+  e:['Travailler depuis le sol quand c’est possible','Plateformes ou nacelles plutôt qu’échelles'],c:['Garde-corps sur passerelles et toits de bacs','Échafaudages réceptionnés et étiquetés','Filets de sécurité'],o:['Formation au montage des échafaudages','Pas de travail isolé en hauteur'],p:['Harnais antichute sur point d’ancrage','Casque avec jugulaire'],
+  u:['Ne pas déplacer la victime','Appeler le poste de garde et le 15','Personne suspendue au harnais : la décrocher au plus vite']},
+ {id:'coact',label:'Coactivité',ex:'Grands arrêts, maintenance, entreprises extérieures',permis:'Plan de prévention écrit après inspection commune',ref:'Code du travail, art. R4512-6 et suivants',
+  e:['Planifier pour éviter les interventions superposées'],c:['Balisage des zones de travail','Points de rassemblement connus de tous'],o:['Accueil sécurité pour chaque intervenant','Habilitations exigées des entreprises extérieures','Coordination quotidienne pendant les arrêts'],p:['EPI du site imposés à tous'],
+  u:['Alerter le poste de garde','Prévenir l’employeur de la victime','Recenser les présents au point de rassemblement']},
+ {id:'citerne',label:'Citernes / engins',ex:'Postes de chargement, camions-citernes, chariots',permis:'Protocole de sécurité chargement / déchargement',ref:'Code du travail, art. R4515-4 et suivants',
+  e:['Séparer les flux piétons et véhicules','Bras de chargement automatiques'],c:['Mise à la terre des citernes avant chargement','Détection de débordement et arrêts d’urgence','Allées piétonnes protégées'],o:['Accueil des chauffeurs et consignes traduites','Plan de circulation affiché','Contrôle du véhicule avant chargement'],p:['Gilet haute visibilité','Vêtements antistatiques'],
+  u:['Actionner l’arrêt d’urgence du poste','Couper les moteurs, sécuriser la zone','Alerter le poste de garde, puis le 15 ou le 18']},
+ {id:'chaleur',label:'Chaleur',ex:'Travaux extérieurs l’été, fours, lignes chaudes',permis:'Consignes de travail par forte chaleur',ref:'Vigilances canicule de Météo-France',
+  e:['Décaler les travaux physiques aux heures fraîches'],c:['Zones d’ombre et locaux de repos rafraîchis','Eau fraîche à proximité des postes'],o:['Pauses renforcées et rotation','Surveillance mutuelle des signes de coup de chaleur','Planning adapté en vigilance orange ou rouge'],p:['Vêtements respirants compatibles ignifugés','Couvre-nuque sous le casque'],
+  u:['Mettre la victime à l’ombre et la refroidir','La faire boire si elle est consciente','Appeler le 15 en cas de confusion ou malaise']},
+ {id:'chute',label:'Chute / manutention',ex:'Passerelles, escaliers, sols gras, port de charges',permis:'Aucun permis spécifique',ref:'Évaluation dans le DUERP',
+  e:['Supprimer les obstacles et égouttures d’huile','Mécaniser les manutentions lourdes'],c:['Caillebotis antidérapants','Éclairage des cheminements de nuit','Aides à la manutention'],o:['Nettoyage rapide des égouttures','Rangement des chantiers en fin de poste'],p:['Chaussures antidérapantes','Gants de manutention'],
+  u:['Ne pas relever une victime qui a mal au dos ou à la nuque','Prévenir le secouriste du site','Baliser la zone']}
+];
+const DM = Object.fromEntries(D.map(d => [d.id, d]));
+const NIV = {1:'Presque-accident',2:'Sans arrêt',3:'Avec arrêt',4:'Grave',5:'Mortel'};
+const VIC = {aucune:'Aucune victime',sal:'Salarié',int:'Intérimaire',ee:'Entreprise ext.'};
+const PL = ['Rare','Possible','Probable','Fréquente'], GL = ['Mineure','Notable','Grave','Très grave'];
+const SOS_T = [
+ {id:'blesse',label:'Personne blessée',r:['Ne déplacez pas la victime sauf danger immédiat','Protégez la zone pour éviter un sur-accident','Restez près d’elle et parlez-lui']},
+ {id:'feu',label:'Incendie',r:['Éloignez-vous et faites évacuer','Fermez les portes derrière vous','Rejoignez le point de rassemblement']},
+ {id:'gaz',label:'Fuite de gaz',r:['Regardez la manche à air','Éloignez-vous perpendiculairement au vent','Ne portez jamais secours sans appareil respiratoire']},
+ {id:'malaise',label:'Malaise',r:['Allongez la personne à l’ombre si possible','Vérifiez qu’elle respire','Allez chercher le défibrillateur le plus proche']},
+ {id:'autre',label:'Autre danger',r:['Mettez-vous en sécurité','Décrivez la situation au poste de garde']}
+];
+const PERMITS = {
+ feu:{label:'Feu',title:'Permis de feu',items:['Zone balisée et débarrassée des matières combustibles','Mesure d’explosivité réalisée et conforme','Égouts et ouvertures voisins obturés','Extincteurs et moyens d’eau à proximité','Surveillant désigné pendant les travaux','Ronde post-travaux planifiée','Permis signé par l’exploitant et l’intervenant']},
+ confine:{label:'Confiné',title:'Permis de pénétrer',items:['Capacité isolée par joints pleins et consignée','Atmosphère mesurée : O₂, explosivité, H₂S','Ventilation forcée en marche','Surveillant extérieur présent en permanence','Trépied et treuil de sauvetage installés','Détecteur 4 gaz porté par l’intervenant','Plan de sauvetage revu avec l’équipe']},
+ consig:{label:'Consignation',title:'Bon de consignation',items:['Énergies identifiées : électrique, pression, vapeur, produit','Séparation réalisée (vannes fermées, disjoncteur ouvert)','Cadenas personnel posé par chaque intervenant','Purge et décompression effectuées','Absence d’énergie vérifiée','Signalisation de consignation posée']}
+};
+const SLIDES = [{"sec": "Vigie · Formation sécurité", "title": "Droit d’arrêt de travail", "pts": ["Stop Work Authority : chacun a le pouvoir d’arrêter un travail dangereux, à tout moment.", "Sensibilisation HSE pour tous les personnels, sous-traitants inclus."], "note": "Bonjour à toutes et à tous. Aujourd'hui, nous parlons d'un outil simple mais essentiel : le droit d'arrêt de travail, ou « Stop Work Authority ». L'idée est la suivante : chaque personne présente sur le site, quel que soit son poste ou son ancienneté, a le droit — et le devoir — d'arrêter un travail qu'elle juge dangereux. À la fin de cette session, vous saurez ce qu'est ce droit, qui peut l'exercer, quand l'utiliser et comment le faire concrètement.", "img": "slides/slide-01.jpg"}, {"sec": "01 · Comprendre", "title": "Qu’est-ce que le droit d’arrêt de travail ?", "pts": ["Il donne à chaque salarié le droit de faire cesser immédiatement un travail dangereux.", "Il s’utilise dès qu’on perçoit une condition ou un comportement dangereux pouvant mener à un événement indésirable.", "C’est l’occasion de corriger un danger et de stopper un acte à risque avant qu’il ne provoque un accident.", "Parfois, le travail le plus important que vous puissiez faire… c’est d’arrêter de travailler."], "note": "Alors, qu'est-ce que le droit d'arrêt de travail, exactement ? C'est le droit donné à chaque salarié d'arrêter un travail qu'il estime dangereux. On l'utilise chaque fois qu'on perçoit une condition dangereuse ou un comportement à risque qui pourrait entraîner un événement indésirable, et chaque fois qu'on est sincèrement inquiet pour sa propre santé ou sa sécurité, ou pour celle des autres. Faire un « Stop » est l'occasion de corriger un danger et de stopper un acte à risque AVANT qu'il ne se produise. Si vous voyez quelque chose qui vous paraît réellement dangereux, ou un comportement à risque en cours, souvenez-vous : parfois, le travail le plus important que vous puissiez faire, c'est d'arrêter de travailler.", "img": "slides/slide-02.jpg"}, {"sec": "01 · Comprendre", "title": "Qui peut arrêter le travail ? Tout le monde.", "pts": ["Vous, quel que soit votre poste ou votre ancienneté.", "Vos collègues, au sein de votre équipe comme des autres.", "Les sous-traitants : entreprises extérieures et intérimaires.", "L’encadrement : chefs d’équipe, superviseurs et managers.", "Les équipes terrain : exploitation, maintenance, travaux sur site.", "Les fonctions support : bureaux, services administratifs, visiteurs.", "Personne ne sera jamais sanctionné pour avoir arrêté un travail par souci de sécurité."], "note": "Qui peut exercer le droit d'arrêt de travail ? La réponse est très simple : tout le monde. Vous, vos collègues, les entreprises extérieures et les intérimaires, votre chef d'équipe ou votre manager, que vous travailliez en exploitation, sur le terrain ou dans un bureau. Nous avons tous le droit d'arrêter un travail pour la sécurité, et personne ne sera sanctionné pour l'avoir fait. Un « Stop » ne prend souvent que quelques minutes : par exemple, si vous voyez quelqu'un sur le point de se blesser, c'est le bon moment pour s'arrêter et lui proposer votre aide. Point de repère pour la France : ce droit d'arrêt interne complète le droit d'alerte et de retrait prévu par le Code du travail (articles L4131-1 et suivants), qui permet à tout salarié de se retirer d'une situation présentant un danger grave et imminent, sans sanction ni retenue de salaire. [À valider avec le service HSE / juridique du site.]", "img": "slides/slide-03.jpg"}, {"sec": "01 · Comprendre", "title": "Quand utiliser mon droit d’arrêt ?", "pts": ["Dès qu’une situation menace les personnes, les équipements ou l’environnement. Par exemple :", "Changement de périmètre ou de mode opératoire", "Changement des conditions (météo, atmosphère…)", "Situation d’urgence", "Équipement mal utilisé", "Manque de connaissances, de compréhension ou d’information", "Presque-accident, condition dangereuse, acte dangereux, déclenchement d’une alarme", "Un risque de blessure ? Ne l’ignorez pas : STOP, et sécurisez."], "note": "Quand faut-il utiliser son droit d'arrêt ? Chaque fois que l'on constate des conditions qui menacent les personnes, les équipements ou l'environnement. Quelques exemples. Un changement de périmètre ou de mode opératoire : par exemple, une tâche déplacée temporairement dans une autre zone, ou un outil différent de celui prévu. Un changement de conditions : si vous conduisez et qu'une tempête de neige survient, la route devient dangereuse — sur site, c'est la même chose avec le vent, la chaleur ou une atmosphère qui évolue. Une situation d'urgence : un incendie, un événement météo violent, ou un collègue qui fait un malaise pendant le travail. Un équipement mal utilisé : un outil employé pour un usage auquel il n'est pas destiné. Un manque de connaissances ou d'information : par exemple, quelqu'un qui débute à un poste et n'est pas sûr de la marche à suivre. Et bien sûr les presque-accidents, les conditions dangereuses, les actes dangereux et les alarmes. Retenez : dès qu'il y a un risque que quelque chose ou quelqu'un soit blessé, ne l'ignorez pas. Arrêtez, et assurez-vous que c'est sûr.", "img": "slides/slide-04.jpg"}, {"sec": "02 · Agir", "title": "Arrêter un comportement à risque", "pts": ["1. Une procédure mal suivie ou un geste à risque ? Prenez l’initiative : demandez une pause.", "2. Échangez avec votre collègue pour que chacun connaisse la façon sûre de continuer.", "Comportements à danger imminent : travail en hauteur sans protection antichute, travail par point chaud près de matières inflammables, non-respect de la consignation (cadenassage), entrée non conforme en espace confiné, passage ou stationnement sous une charge levée, EPI inadaptés ou non portés."], "note": "Parfois, ce n'est pas une situation qui est dangereuse, c'est un comportement. Quand vous voyez une procédure qui n'est pas correctement suivie, ou un comportement à risque en cours, prenez l'initiative et demandez une courte pause. Puis parlez avec votre collègue : dites-lui que votre objectif est de veiller sur lui, pour qu'il rentre chez lui en bonne santé — et assurez-vous que tout le monde connaît la façon sûre de continuer. Exemples de comportements qui exposent à un danger imminent : travailler en hauteur sans protection antichute ; réaliser un travail par point chaud près de matières inflammables ; ne pas respecter la consignation des énergies (cadenassage) ; entrer dans un espace confiné sans respecter la procédure ; passer ou stationner sous une charge levée ; ne pas porter les EPI adaptés. Un mot pour les nouveaux arrivants : si vous débutez au poste, vous avez exactement le même droit d'arrêter — et c'est souvent vous qui voyez ce que les autres ne voient plus.", "img": "slides/slide-05.jpg"}, {"sec": "02 · Agir · Ne comptez pas sur les autres", "title": "Je vois. J’agis. STOP !", "pts": ["Prendre la parole peut sauver une vie.", "On vous demande d’arrêter ? Arrêtez immédiatement.", "Vos collègues veulent vous protéger. La sécurité est l’affaire de tous."], "note": "Chacun d'entre nous a le droit, et le devoir, d'exercer son droit d'arrêt. Ne partez pas du principe que quelqu'un d'autre va s'en occuper. Retenez trois mots : je vois, j'agis, STOP ! Il est facile de se dire « ce n'est pas à moi de dire aux autres quoi faire » ou « ils savent sûrement ce qu'ils font, qui suis-je pour les arrêter ? ». Pourtant, vous pourriez sauver la vie de quelqu'un en prenant la parole et en arrêtant le travail pour la sécurité. Et l'inverse est vrai : si quelqu'un vous demande d'arrêter, vous devez arrêter le travail immédiatement. Vos collègues ne cherchent pas à vous punir, ils cherchent à vous protéger. La sécurité est l'affaire de tous.", "img": "slides/slide-06.jpg"}, {"sec": "02 · Agir", "title": "Comment exercer le droit d’arrêt ? 6 étapes", "pts": ["1. Arrêter le travail : stopper l’activité et mettre la zone en sécurité.", "2. Prévenir le superviseur, et toute personne exposée au danger.", "3. Analyser la situation : ensemble, comprendre le risque et ses causes.", "4. Corriger le problème : inspection par des personnes qualifiées, actions correctives.", "5. Reprendre le travail : seulement quand la situation est sûre pour tous.", "6. Assurer le suivi : partager le retour d’expérience pour éviter la récidive."], "note": "Comment utilise-t-on concrètement le droit d'arrêt ? Si le problème est simple, on arrête, on corrige et on reprend. Mais si le problème est plus compliqué — si vous ne pouvez pas le résoudre immédiatement ou s'il vous faut de l'aide — voici les étapes. Côté personne qui arrête le travail : un, arrêter le travail et sécuriser la zone. Deux, prévenir votre superviseur ou votre manager, ainsi que toute personne qui pourrait être exposée à la situation dangereuse. Trois, analyser la situation : vous, les autres personnes concernées et le superviseur discutez ensemble du danger et de ses causes. Ensuite interviennent les personnes qui traitent le problème. Quatre, corriger : en général, la zone est inspectée par des personnes qualifiées — encadrement, HSE, maintenance — qui définissent les actions correctives. Cinq, reprendre le travail, uniquement quand la situation est redevenue sûre pour tout le monde. Six, assurer le suivi : on enregistre l'arrêt, on partage le retour d'expérience et on vérifie que les mesures tiennent dans la durée. [Adapter au circuit de remontée propre au site.]", "img": "slides/slide-07.jpg"}, {"sec": "03 · Lever les freins", "title": "Pourquoi n’ose-t-on pas arrêter le travail ?", "pts": ["La perception : « Je ne vois pas le danger. » « Le risque ne me semble pas assez grave. »", "La compréhension : « Je n’ai pas l’autorité pour intervenir dans cette situation. »", "La relation avec l’équipe : « Je ne veux pas froisser un collègue. » « Le groupe me pousse à me taire. » « J’ai peur de me tromper et d’être ridicule. »", "La relation avec la hiérarchie : « Je crains des conséquences si l’arrêt pénalise la production. »"], "note": "Parlons franchement des raisons pour lesquelles on n'utilise pas son droit d'arrêt. D'abord, la perception. On ne perçoit pas toujours la situation comme dangereuse : on a déjà fait la même chose de la même façon, et rien ne s'est passé. Mais si c'était simplement de la chance ? On peut aussi penser que le risque n'est pas assez grave pour justifier un arrêt, surtout quand on a presque fini. Sachez pourtant qu'arrêter le travail ne veut pas forcément dire arrêter l'unité ou le site entier : la plupart du temps, un arrêt se règle en quelques minutes. Ensuite, la compréhension : on peut croire qu'on n'a pas l'autorité pour intervenir. Comme on l'a vu, tout le monde l'a. Puis la relation avec l'équipe : on ne veut pas froisser un collègue, on ressent la pression du groupe, ou on a peur de mal interpréter la situation et d'être ridicule. Enfin la relation avec la hiérarchie : on craint des conséquences si l'arrêt impacte la production. Notre message est clair : personne ne sera sanctionné pour un arrêt fait de bonne foi pour la sécurité. Question pour la salle : lequel de ces freins avez-vous déjà ressenti ?", "img": "slides/slide-08.jpg"}, {"sec": "03 · Retenir", "title": "L’essentiel à retenir", "pts": ["1. Restez attentif à votre environnement, en permanence.", "2. Pensez aux dangers possibles de chaque tâche.", "3. Danger imminent ? Arrêtez le travail.", "4. Prévenez votre superviseur.", "5. Expliquez le danger que vous percevez.", "6. Le superviseur traite le problème avec vous.", "Danger imminent : toute condition, action ou pratique présentant un danger qui pourrait raisonnablement causer un dommage physique."], "note": "Récapitulons. Un : restez attentif à votre environnement en permanence — gardez l'œil ouvert sur tout danger qui pourrait vous toucher, vous ou vos collègues. Deux : pensez aux dangers possibles de chaque tâche, surtout quand vous faites quelque chose de nouveau ou de différent de d'habitude. Prenez cinq minutes : qu'est-ce qui pourrait mal tourner ? Est-ce que cela peut blesser quelqu'un ou avoir un impact sur l'environnement ? Trois : si vous percevez un danger imminent, arrêtez le travail. Un danger imminent, c'est toute condition, action ou pratique présentant un danger qui pourrait raisonnablement causer un dommage physique. Par exemple, un objet au sol sur lequel quelqu'un pourrait trébucher : il suffit d'une minute pour s'arrêter et le signaler. Demandez-vous : si je fais ça, que peut-il arriver — à moi, à vous, à l'équipe ? Si la réponse peut être une blessure, on arrête. Ensuite : quatre, prévenez votre superviseur ; cinq, expliquez le danger perçu ; six, le superviseur traite le problème avec vous.", "img": "slides/slide-09.jpg"}, {"sec": "En résumé", "title": "Repérer. Arrêter. Signaler.", "pts": ["Repérer : je reste attentif et j’identifie le danger.", "Arrêter : j’utilise mon droit d’arrêt, sans hésiter.", "Signaler : je préviens et je participe à la solution.", "Dans le doute, on s’arrête."], "note": "Pour conclure, trois verbes à garder en tête : repérer, arrêter, signaler. Repérer : je reste attentif à mon environnement et j'identifie les dangers. Arrêter : j'utilise mon droit d'arrêt sans hésiter, quel que soit mon poste. Signaler : je préviens mon superviseur et je participe à la recherche de solution. Et si vous ne deviez retenir qu'une phrase : dans le doute, on s'arrête. Merci de votre attention — avez-vous des questions ou des situations vécues que vous aimeriez partager ?", "img": "slides/slide-10.jpg"}];
+const QUIZ = [{"q": "Qui peut arrêter un travail qu’il juge dangereux ?", "o": ["Seulement l’encadrement", "Seulement le service HSE", "Tout le monde, sous-traitants et intérimaires compris", "Seulement les salariés expérimentés"], "a": 2, "why": "Diapositive 3 : nous avons tous le droit d’arrêter, quel que soit le poste ou l’ancienneté."}, {"q": "Un collègue travaille en hauteur sans protection antichute. Que faites-vous ?", "o": ["Je laisse faire, il connaît son travail", "Je demande une pause et j’échange avec lui sur la façon sûre de continuer", "J’attends la fin de sa tâche pour en parler", "J’en parle au service HSE la semaine suivante"], "a": 1, "why": "Diapositive 5 : prenez l’initiative, demandez une pause, puis échangez avec votre collègue."}, {"q": "Quelle est la première étape quand vous arrêtez le travail ?", "o": ["Rédiger un rapport", "Arrêter l’activité et mettre la zone en sécurité", "Corriger soi-même le problème", "Attendre l’arrivée du superviseur"], "a": 1, "why": "Diapositive 7 : étape 1, arrêter le travail et mettre la zone en sécurité."}, {"q": "Quand peut-on reprendre le travail ?", "o": ["Après 15 minutes d’arrêt", "Dès que la production l’exige", "Seulement quand la situation est sûre pour tous", "Dès que le superviseur est arrivé"], "a": 2, "why": "Diapositive 7 : étape 5, reprendre seulement quand la situation est sûre pour tous."}, {"q": "Risquez-vous une sanction pour avoir arrêté un travail de bonne foi, par souci de sécurité ?", "o": ["Oui, si l’arrêt pénalise la production", "Oui, si le danger n’était finalement pas réel", "Non, jamais", "Seulement si vous êtes nouveau au poste"], "a": 2, "why": "Diapositives 3 et 8 : personne ne sera sanctionné pour un arrêt fait de bonne foi pour la sécurité."}, {"q": "Quels sont les trois verbes à retenir ?", "o": ["Observer, noter, transmettre", "Repérer, arrêter, signaler", "Prévenir, attendre, reprendre", "Vérifier, signer, archiver"], "a": 1, "why": "Diapositive 10 : repérer, arrêter, signaler. Dans le doute, on s’arrête."}];
+const STOP_M = ["Changement de périmètre ou de mode opératoire", "Changement des conditions (météo, atmosphère…)", "Situation d’urgence", "Équipement mal utilisé", "Manque de connaissances ou d’information", "Presque-accident", "Condition dangereuse", "Comportement à risque", "Déclenchement d’une alarme"];
+const STOP_S = ["Arrêter le travail", "Prévenir le superviseur", "Analyser la situation", "Corriger le problème", "Reprendre le travail", "Assurer le suivi"];
+const QUIZ_PASS = 5;
+const INC_ST = {nouveau:{label:'Nouveau',cls:'lv-high'},analyse:{label:'En analyse',cls:'lv-info'},clos:{label:'Clos',cls:'lv-done'}};
+
+/* ---------- Outils ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lvl = v => v >= 12 ? {label:'Critique',cls:'lv-crit',action:'Agir immédiatement ou arrêter l’opération'}
+  : v >= 8 ? {label:'Élevé',cls:'lv-high',action:'Action corrective sous 1 mois'}
+  : v >= 4 ? {label:'Modéré',cls:'lv-mod',action:'Planifier une action sous 3 mois'}
+  : {label:'Faible',cls:'lv-low',action:'Surveiller, réévaluer chaque année'};
+const nivCls = n => n >= 4 ? 'lv-crit' : n === 3 ? 'lv-high' : n === 2 ? 'lv-mod' : 'lv-info';
+const ago = iso => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); if (!isFinite(m)) return ''; if (m < 1) return 'à l’instant'; if (m < 60) return 'il y a ' + m + ' min'; const h = Math.round(m / 60); if (h < 24) return 'il y a ' + h + ' h'; const d = Math.round(h / 24); return 'il y a ' + d + ' j'; };
+const hhmm = iso => { try { return new Date(iso).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); } catch { return ''; } };
+const dmy = iso => { try { return new Date(iso).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); } catch { return ''; } };
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const ico = {
+ home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ risk:'<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/>',
+ scan:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/>',
+ pen:'<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
+ phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+ cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+ clip:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/>',
+ bulb:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.6 1 2.5h6c0-.9.2-1.7 1-2.5A6 6 0 0 0 12 3z"/>',
+ back:'<path d="M15 6l-6 6 6 6"/>',
+ check:'<path d="m5 12 5 5 9-10"/>',
+ chev:'<path d="m9 6 6 6-6 6"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6"/>',
+ hand:'<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7h-.5A6.5 6.5 0 0 1 4 15.5l-1-3a1.5 1.5 0 0 1 2.7-1.2L8 15"/>',
+ spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'
+};
+const svg = (n, s = 22, w = 2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ico[n]}</svg>`;
+const backLink = (href, title, sub) => `<div class="top" style="justify-content:flex-start"><a class="iconbtn" href="${href}" aria-label="Retour">${svg('back')}</a><div><h1 style="font-size:22px">${title}</h1>${sub ? `<span class="small muted">${sub}</span>` : ''}</div></div>`;
+
+/* ---------- État ---------- */
+const S = { cfg:{}, risks:[], incidents:[], sos:[], permits:[], equip:[], stops:[], formation:[], me:{id:null}, canEdit:false, dbState:'loading' };
+const ui = {
+ sosType:'blesse', sosLieu:'', mySos:null, sosErr:'',
+ riskFilter:'all', evalOpen:false, openRisk:null, ev:{zone:'',danger:'atex',p:2,g:2,equip:''},
+ incFilter:'all', openInc:null,
+ decl:{type:'atex',niv:1,vic:'aucune',ind:false,lieu:'',desc:''}, photoFile:null, photoUrl:null, declBusy:false, declDone:null, declErr:'', aiBusy:false, aiMsg:'',
+ scanMsg:'', manualCode:'', scanBusy:false, sheet:null,
+ permitKind:'confine', permitEquip:'', checks:{}, permitMsg:'',
+ sol:'atex',
+ slide:0, notesOpen:false, present:false, quiz:{}, quizResult:null, quizErr:'',
+ stop:{motif:'', lieu:'', desc:'', told:false}, stopErr:'', stopMsg:'', stopBusy:false, stopNotes:{}, stopLog:null,
+ cfgDraft:null, cfgMsg:'', eq:{code:'',nom:'',zone:'',produit:'',tags:'',consignes:'',permis:''}, eqMsg:'', confirmDel:null, copied:''
+};
+let lastEquip = lsGet('vigie.lastEquip');
+let db = null, user = null, assets = null, sample = null, downloads = null;
+const photoCache = {};
+
+/* ---------- Rendu ---------- */
+const route = () => { const h = (location.hash || '').slice(1); return VIEWS[h] ? h : 'accueil'; };
+let pending = false, holdT = null;
+let deferredPrompt = null;
+const isStandalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; render(); });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; render(); });
+if ('serviceWorker' in navigator && location.protocol !== 'file:') { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
+function render(force) {
+  const a = document.activeElement;
+  if (!force && (holdT || (a && a.closest && a.closest('#view') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))) { pending = true; renderBanner(); return; }
+  pending = false;
+  if ((() => { try { return AUTH.need; } catch { return true; } })()) { if (typeof authView !== 'function' || !SUPA_READY()) return; $('#view').innerHTML = authView(); $('#tabs').innerHTML = ''; $('#banner').innerHTML = ''; return; }
+  const r = route();
+  $('#view').innerHTML = VIEWS[r]();
+  renderBanner(); renderTabs(r); fillNames();
+  $('#siteName').textContent = S.cfg.siteName ? S.cfg.siteName + ' · Seveso seuil haut' : 'Prévention des accidents';
+}
+document.addEventListener('focusout', () => setTimeout(() => { if (pending) render(); }, 0));
+window.addEventListener('hashchange', () => { render(true); window.scrollTo(0, 0); });
+
+function renderTabs(r) {
+  const t = [['accueil','Accueil','home'],['risques','Risques','risk'],['scanner','Scanner','scan'],['declarer','Déclarer','pen'],['urgences','Urgences','phone']];
+  $('#tabs').innerHTML = t.map(([id, l, i]) => id === 'scanner'
+    ? `<a class="tab" href="#${id}" ${r === id ? 'aria-current="page"' : ''}><span class="fab">${svg(i, 24)}</span>${l}</a>`
+    : `<a class="tab" href="#${id}" ${r === id ? 'aria-current="page"' : ''}>${svg(i, 24)}${l}</a>`).join('');
+}
+
+function activeSos() { const lim = Date.now() - 24 * 3600e3; return S.sos.filter(s => (s.status === 'active' || s.status === 'prise') && new Date(s.at).getTime() > lim); }
+function renderBanner() {
+  const list = activeSos();
+  let h = '';
+  if (S.dbState === 'off') h += `<div class="note warn">Données partagées indisponibles sur cet affichage : les déclarations ne seront pas enregistrées. En cas d’urgence, appelez directement le poste de garde.</div>`;
+  h += list.slice(0, 3).map(s => {
+    const t = SOS_T.find(x => x.id === s.type) || SOS_T[4];
+    return `<div class="alert" role="alert">
+      <span class="tiny" style="font-weight:700;letter-spacing:.06em">${s.status === 'prise' ? 'SOS PRIS EN CHARGE' : 'ALERTE SOS EN COURS'} · ${esc(hhmm(s.at))}</span>
+      <strong style="font-family:var(--display);font-size:18px">${esc(t.label)}${s.equipName ? ' · ' + esc(s.equipName) : ''}</strong>
+      <span class="small">${s.lieu ? esc(s.lieu) + ' · ' : ''}Par <span data-uid="${esc(s.by || '')}">…</span> · ${esc(ago(s.at))}${s.status === 'prise' ? ' · pris en charge par <span data-uid="' + esc(s.takenBy || '') + '">…</span>' : ''}</span>
+      <div class="acts">${s.status === 'active' ? `<button class="btn sm" data-act="sos-take" data-id="${esc(s.id)}">Je prends en charge</button>` : ''}<button class="btn sm" data-act="sos-close" data-id="${esc(s.id)}">Clore l’alerte</button></div>
+    </div>`;
+  }).join('');
+  $('#banner').innerHTML = h;
+  fillNames($('#banner'));
+}
+
+async function fillNames(root = document) {
+  const els = [...root.querySelectorAll('[data-uid]')];
+  if (!els.length) return;
+  const ids = [...new Set(els.map(e => e.dataset.uid).filter(Boolean))];
+  let ps = {};
+  if (user && ids.length) { try { ps = await user.profiles(ids); } catch {} }
+  els.forEach(e => { const id = e.dataset.uid; e.textContent = !id ? 'quelqu’un' : (id === S.me.id ? 'vous' : ((ps[id] && ps[id].name) || 'un collègue')); });
+}
+
+/* ---------- Écrans ---------- */
+const openRisks = () => S.risks.filter(r => !r.done);
+const VIEWS = {
+ accueil() {
+  const prio = openRisks().filter(r => r.p * r.g >= 8);
+  const ev30 = S.incidents.filter(i => Date.now() - new Date(i.at).getTime() < 30 * 864e5).length;
+  const actP = S.permits.filter(p => p.status === 'actif').length;
+  const stopsOpen = S.stops.filter(s => s.status !== 'clos').length;
+  const myForm = S.formation.find(f => f.id === S.me.id);
+  const top = openRisks().slice().sort((a, b) => b.p * b.g - a.p * a.g).slice(0, 3);
+  const recent = S.incidents.slice(0, 3);
+  return `
+  <div class="stack-s"><span class="small muted">Bonjour,</span><h1>Travaillons en sécurité aujourd’hui</h1></div>
+  <a class="sos-card" href="#sos"><span class="dot">SOS</span><span><b>Alerte immédiate</b><span class="small">Prévient le poste de garde et toute l’équipe</span></span></a>
+  ${SUPA && 'Notification' in window && Notification.permission === 'default' ? '<button class="btn block" data-act="notif">Activer les alertes SOS sur ce téléphone</button>' : ''}
+  <a class="stopcard" href="#stop"><span class="oct" aria-hidden="true">${stopSign(58)}</span><span><b>J’arrête le travail</b><span class="small">Droit d’arrêt : un danger ? STOP, puis les 6 étapes</span></span></a>
+  ${myForm ? '' : `<a class="card" href="#formation" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;border-color:var(--accent)"><span class="badge lv-info">À faire</span><span class="grow" style="display:flex;flex-direction:column;gap:2px;flex:1"><strong class="small">Formation : droit d’arrêt de travail</strong><span class="tiny muted">10 diapositives et un quiz de 6 questions</span></span>${svg('chev',18)}</a>`}
+  <div class="grid3">
+    <div class="kpi"><b style="color:${prio.length ? 'var(--danger-ink)' : 'var(--ok-ink)'}">${prio.length}</b><span>risques prioritaires</span></div>
+    <div class="kpi"><b>${ev30}</b><span>événements sur 30 jours</span></div>
+    <div class="kpi"><b style="color:${stopsOpen ? 'var(--high-ink)' : 'inherit'}">${stopsOpen}</b><span>arrêts STOP en cours</span></div>
+  </div>
+  <div class="stack-s"><h2>Actions rapides</h2>
+   <div class="grid2">
+    <a class="action" href="#declarer"><span class="ic" style="background:var(--danger-soft);color:var(--danger-ink)">${svg('cam',20)}</span><span><strong>Déclarer</strong><small>Photo et dictée</small></span></a>
+    <a class="action" href="#scanner"><span class="ic" style="background:var(--accent-soft);color:var(--accent-ink)">${svg('scan',20)}</span><span><strong>Scanner</strong><small>QR d’un équipement</small></span></a>
+    <a class="action" href="#permis"><span class="ic" style="background:var(--ok-soft);color:var(--ok-ink)">${svg('clip',20)}</span><span><strong>Check-list permis</strong><small>Feu, confiné, consignation</small></span></a>
+    <a class="action" href="#solutions"><span class="ic" style="background:var(--warn-soft);color:var(--warn-ink)">${svg('bulb',20)}</span><span><strong>Solutions</strong><small>Par type de danger</small></span></a>
+    <a class="action" href="#formation"><span class="ic" style="background:var(--surface-2);color:var(--fg)">${svg('book',20)}</span><span><strong>Formation</strong><small>${myForm ? 'Validée · revoir' : 'Droit d’arrêt · à faire'}</small></span></a>
+    <a class="action" href="#stop"><span class="ic" style="background:#F2B705;color:#111A2B">${svg('hand',20)}</span><span><strong>Arrêts STOP</strong><small>${stopsOpen ? stopsOpen + ' en cours' : 'Suivi des 6 étapes'}</small></span></a>
+   </div></div>
+  <div class="stack-s"><div class="top"><h2>À traiter en priorité</h2><a class="btn ghost sm" href="#risques">Tout voir</a></div>
+   <div class="card flush list">${top.length ? top.map(riskRowSimple).join('') : emptyState('Aucun risque ouvert dans le registre.', '#risques', 'Évaluer un risque')}</div></div>
+  <div class="stack-s"><div class="top"><h2>Derniers événements</h2><a class="btn ghost sm" href="#evenements">Journal</a></div>
+   <div class="card flush list">${recent.length ? recent.map(incRowSimple).join('') : emptyState('Aucun événement déclaré. Déclarez aussi les presque-accidents.', '#declarer', 'Déclarer')}</div></div>
+  ${isStandalone ? '' : `<details class="card" ${deferredPrompt ? 'open' : ''}><summary style="font-weight:600;cursor:pointer;min-height:28px">Installer Vigie sur son téléphone</summary>
+   ${deferredPrompt ? '<button class="btn primary block" style="margin-top:10px" data-act="install">Installer l’application</button>' : ''}
+   <div class="stack-s small" style="margin-top:10px"><span>Ouvrez ce site dans le navigateur du téléphone, puis :</span>
+   <ul><li>iPhone (Safari) : bouton Partager, puis « Sur l’écran d’accueil »</li><li>Android (Chrome) : menu ⋮, puis « Ajouter à l’écran d’accueil »</li></ul>
+   <span class="muted">Vigie s’ouvre alors comme une application. Dans cette version, les données sont enregistrées sur chaque téléphone.</span></div></details>`}`;
+ },
+
+ sos() {
+  const mine = ui.mySos && S.sos.find(s => s.id === ui.mySos && (s.status === 'active' || s.status === 'prise'));
+  const t = SOS_T.find(x => x.id === (mine ? mine.type : ui.sosType)) || SOS_T[0];
+  const poste = S.cfg.poste || '[NUMÉRO INTERNE]';
+  if (mine) return `${backLink('#accueil', 'Alerte SOS')}
+   <div class="alert"><span class="tiny" style="font-weight:700;letter-spacing:.06em">${mine.status === 'prise' ? 'PRISE EN CHARGE' : 'ALERTE ENVOYÉE'} · ${esc(hhmm(mine.at))}</span>
+    <strong style="font-family:var(--display);font-size:22px">${mine.status === 'prise' ? 'Les secours du site arrivent' : 'Toute l’équipe est prévenue'}</strong>
+    <span class="small">${esc(t.label)}${mine.equipName ? ' · ' + esc(mine.equipName) : ''}. Appelez aussi le poste de garde : ${esc(poste)}.</span></div>
+   <div class="card stack-s"><h2>En attendant les secours</h2><ol>${t.r.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
+   ${numbersCard()}
+   <button class="btn block" data-act="sos-close" data-id="${esc(mine.id)}">Annuler l’alerte (fausse alerte ou situation réglée)</button>`;
+  return `${backLink('#accueil', 'Alerte SOS', 'Maintenez le bouton 1,5 seconde')}
+   <div class="stack-s"><span class="label">Que se passe-t-il ?</span><div class="chips">${SOS_T.map(x => `<button class="chip red" aria-pressed="${ui.sosType === x.id}" data-act="sos-type" data-v="${x.id}">${x.label}</button>`).join('')}</div></div>
+   <button class="hold" id="holdBtn" aria-label="Maintenir pour envoyer l’alerte SOS"><svg class="ring" viewBox="0 0 248 248" aria-hidden="true"><circle cx="124" cy="124" r="119"/></svg><b>SOS</b><span class="small" style="font-weight:600">Maintenir pour alerter</span></button>
+   ${ui.sosErr ? `<div class="note err">${esc(ui.sosErr)}</div>` : ''}
+   <div class="field"><label for="sosLieu">Où êtes-vous ? (facultatif)</label><input class="input" id="sosLieu" data-bind="sosLieu" value="${esc(ui.sosLieu)}" placeholder="${lastEquip ? 'Près de ' + esc(lastEquip.nom) : 'Ex. : Unité de distillation, rack 3'}"></div>
+   <div class="note info small">${lastEquip ? 'Position jointe : dernier équipement scanné, ' + esc(lastEquip.nom) + '.' : 'Astuce : scannez le QR de l’équipement le plus proche pour joindre votre position.'}</div>
+   ${numbersCard()}`;
+ },
+
+ declarer() {
+  if (ui.declDone) return declResult(ui.declDone);
+  const d = ui.decl;
+  return `<div class="stack-s"><h1>Déclarer un événement</h1><span class="small muted">Accident, presque-accident ou situation dangereuse</span></div>
+   ${ui.photoUrl ? `<div class="stack-s"><img class="photo" src="${esc(ui.photoUrl)}" alt="Photo jointe à la déclaration"><div class="chips"><label class="btn sm" style="position:relative">Reprendre la photo<input type="file" accept="image/*" capture="environment" data-file="photo" style="position:absolute;inset:0;opacity:0"></label><button class="btn sm" data-act="photo-del">Retirer</button></div></div>`
+    : `<label class="drop" style="position:relative"><span class="ic" style="width:44px;height:44px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center">${svg('cam')}</span>Prendre une photo<span class="tiny muted" style="font-weight:400">Ou choisir dans la galerie</span><input type="file" accept="image/*" capture="environment" data-file="photo"></label>`}
+   <div class="field"><label for="desc">Ce qui s’est passé</label>
+    <textarea class="input" id="desc" data-bind="decl.desc" placeholder="Décrivez les faits, sans chercher de responsable.">${esc(d.desc)}</textarea>
+    <span class="tiny muted">Pour dicter, appuyez sur le micro du clavier de votre téléphone.</span></div>
+   ${sample ? `<button class="btn" data-act="ai-fill" ${ui.aiBusy ? 'disabled' : ''}>${svg('spark',18)} ${ui.aiBusy ? 'Analyse en cours…' : 'Remplir le formulaire avec l’IA'}</button>${ui.aiMsg ? `<div class="note info small">${esc(ui.aiMsg)}</div>` : ''}` : ''}
+   <div class="stack-s"><span class="label">Type d’événement</span><div class="chips">${D.map(x => `<button class="chip" aria-pressed="${d.type === x.id}" data-act="decl" data-k="type" data-v="${x.id}">${x.label}</button>`).join('')}</div></div>
+   <div class="stack-s"><span class="label">Gravité</span><div class="chips">${Object.keys(NIV).map(n => `<button class="chip" aria-pressed="${d.niv === +n}" data-act="decl" data-k="niv" data-v="${n}">${NIV[n]}</button>`).join('')}</div></div>
+   <div class="stack-s"><span class="label">Victime</span><div class="chips">${Object.keys(VIC).map(k => `<button class="chip" aria-pressed="${d.vic === k}" data-act="decl" data-k="vic" data-v="${k}">${VIC[k]}</button>`).join('')}</div></div>
+   <button class="check" role="switch" aria-checked="${d.ind}" data-act="decl-ind"><span class="box">${svg('check',16,3)}</span><span style="flex:1"><strong>Fuite, feu ou rejet</strong><br><span class="tiny muted">Ajoute la déclaration à la DREAL et l’alerte POI</span></span></button>
+   <div class="field"><label for="lieu">Lieu</label><input class="input" id="lieu" data-bind="decl.lieu" value="${esc(d.lieu || (lastEquip ? lastEquip.nom : ''))}" placeholder="Ex. : Parc de stockage, bac B12"></div>
+   ${ui.declErr ? `<div class="note err">${esc(ui.declErr)}</div>` : ''}
+   <button class="btn primary block" data-act="decl-send" ${ui.declBusy ? 'disabled' : ''}>${ui.declBusy ? 'Envoi…' : 'Envoyer au service HSE'}</button>`;
+ },
+
+ evenements() {
+  const f = ui.incFilter;
+  const list = S.incidents.filter(i => f === 'all' || (i.status || 'nouveau') === f);
+  return `${backLink('#accueil', 'Journal des événements', S.incidents.length + ' déclaration(s)')}
+   <div class="chips">${[['all','Tous'],['nouveau','Nouveaux'],['analyse','En analyse'],['clos','Clos']].map(([k, l]) => `<button class="chip" aria-pressed="${f === k}" data-act="inc-filter" data-v="${k}">${l}</button>`).join('')}</div>
+   <div class="stack-s">${list.length ? list.map(incCard).join('') : `<div class="card">${emptyState('Aucun événement dans cette catégorie.', '#declarer', 'Déclarer un événement')}</div>`}</div>`;
+ },
+
+ risques() {
+  const f = ui.riskFilter;
+  const sorted = S.risks.slice().sort((a, b) => (a.done - b.done) || (b.p * b.g - a.p * a.g));
+  const shown = sorted.filter(r => f === 'all' || (f === 'prio' ? (!r.done && r.p * r.g >= 8) : r.done));
+  const ev = ui.ev, L = lvl(ev.p * ev.g);
+  const o = openRisks();
+  return `<div class="top"><div><h1>Risques</h1><span class="small muted">${o.length} ouverts · ${o.filter(r => r.p * r.g >= 8).length} prioritaires</span></div><button class="btn primary sm" data-act="eval-toggle">${ui.evalOpen ? 'Fermer' : '+ Évaluer'}</button></div>
+   ${ui.evalOpen ? `<div class="card stack">
+     <div class="field"><label for="evZone">Équipement ou opération</label><input class="input" id="evZone" data-bind="ev.zone" value="${esc(ev.zone)}" placeholder="Ex. : Pompe P-204, changement de garniture"></div>
+     ${S.equip.length ? `<div class="field"><label for="evEq">Équipement lié (facultatif)</label><select class="input" id="evEq" data-bind="ev.equip"><option value="">Aucun</option>${S.equip.map(e => `<option value="${esc(e.code)}" ${ev.equip === e.code ? 'selected' : ''}>${esc(e.nom)}</option>`).join('')}</select></div>` : ''}
+     <div class="stack-s"><span class="label">Danger</span><div class="chips">${D.map(x => `<button class="chip" aria-pressed="${ev.danger === x.id}" data-act="ev" data-k="danger" data-v="${x.id}">${x.label}</button>`).join('')}</div></div>
+     <div class="stack-s"><span class="label">Probabilité</span><div class="grid4">${PL.map((l, i) => `<button class="chip" aria-pressed="${ev.p === i + 1}" data-act="ev" data-k="p" data-v="${i + 1}">${l}</button>`).join('')}</div></div>
+     <div class="stack-s"><span class="label">Gravité</span><div class="grid4">${GL.map((l, i) => `<button class="chip" aria-pressed="${ev.g === i + 1}" data-act="ev" data-k="g" data-v="${i + 1}">${l}</button>`).join('')}</div></div>
+     <div class="row" style="padding:0;min-height:0"><span class="score ${L.cls}" style="width:56px;height:56px;font-size:24px">${ev.p * ev.g}</span><span class="grow"><strong>${L.label}</strong><span class="small muted">${L.action}</span></span></div>
+     <div class="note info small"><strong>Solution prioritaire :</strong> ${esc(DM[ev.danger].e[0])}<br><strong>Permis :</strong> ${esc(DM[ev.danger].permis)}</div>
+     <button class="btn block" style="background:var(--fg);color:var(--bg);border-color:var(--fg)" data-act="eval-add">Ajouter au registre</button></div>` : ''}
+   <div class="chips">${[['all','Tous'],['prio','Prioritaires'],['done','Traités']].map(([k, l]) => `<button class="chip" aria-pressed="${f === k}" data-act="risk-filter" data-v="${k}">${l}</button>`).join('')}</div>
+   <div class="stack-s">${shown.length ? shown.map(riskCard).join('') : `<div class="card">${S.dbState === 'loading' ? '<div class="empty">Chargement du registre…</div>' : emptyState('Aucun risque ici. Appuyez sur « + Évaluer » pour ajouter le premier.')}</div>`}</div>`;
+ },
+
+ scanner() {
+  if (ui.sheet) return equipSheet(ui.sheet);
+  return `<div class="stack-s"><h1>Scanner un équipement</h1><span class="small muted">Bacs, vannes, pompes, postes de chargement</span></div>
+   <label class="drop" style="position:relative;min-height:220px;background:var(--fg);color:var(--bg);border:0">
+    <span style="width:120px;height:120px;border:4px solid currentColor;border-radius:18px;display:grid;place-items:center">${svg('scan',48,1.8)}</span>
+    <span>${ui.scanBusy ? 'Lecture du QR code…' : 'Photographier le QR code'}</span>
+    <input type="file" accept="image/*" capture="environment" data-file="qr"></label>
+   ${ui.scanMsg ? `<div class="note warn">${esc(ui.scanMsg)}</div>` : ''}
+   <div class="field"><label for="code">Ou saisir le code de l’équipement</label><div style="display:flex;gap:8px"><input class="input" id="code" data-bind="manualCode" value="${esc(ui.manualCode)}" placeholder="Ex. : B12" autocapitalize="characters"><button class="btn primary" data-act="code-open">Ouvrir</button></div></div>
+   <div class="stack-s"><h2>Équipements du site</h2><div class="card flush list">${S.equip.length ? S.equip.map(e => `<button class="row" data-act="sheet" data-v="${esc(e.code)}"><span class="score lv-info" style="font-size:12px">${esc(e.code)}</span><span class="grow"><strong>${esc(e.nom)}</strong><span class="tiny muted">${esc(e.zone || '')}</span></span>${svg('chev',18)}</button>`).join('') : `<div class="empty">${S.dbState === 'loading' ? 'Chargement…' : 'Aucun équipement enregistré. Le service HSE les ajoute dans Réglages.'}</div>`}</div></div>`;
+ },
+
+ permis() {
+  const P = PERMITS[ui.permitKind];
+  const eqCode = ui.permitEquip || (lastEquip && lastEquip.code) || '';
+  const ck = ui.checks[ui.permitKind] || {};
+  const done = P.items.filter((_, i) => ck[i]).length, all = done === P.items.length;
+  const act = S.permits.filter(p => p.status === 'actif');
+  return `${backLink('#accueil', 'Check-list permis')}
+   <div class="seg" role="group" aria-label="Type de permis">${Object.keys(PERMITS).map(k => `<button aria-pressed="${ui.permitKind === k}" data-act="pk" data-v="${k}">${PERMITS[k].label}</button>`).join('')}</div>
+   <div class="field"><label for="pEq">Équipement</label><select class="input" id="pEq" data-bind="permitEquip"><option value="">Non précisé</option>${S.equip.map(e => `<option value="${esc(e.code)}" ${eqCode === e.code ? 'selected' : ''}>${esc(e.nom)}</option>`).join('')}</select></div>
+   <div class="card stack-s"><div class="top"><strong>${P.title}</strong><span style="font-family:var(--display);font-weight:800;color:var(--accent)">${done} / ${P.items.length}</span></div><div class="bar"><i style="width:${Math.round(done / P.items.length * 100)}%;${all ? 'background:var(--ok)' : ''}"></i></div></div>
+   <div class="stack-s">${P.items.map((it, i) => `<button class="check" role="checkbox" aria-checked="${!!ck[i]}" data-act="ck" data-v="${i}"><span class="box">${svg('check',16,3)}</span><span style="flex:1">${esc(it)}</span></button>`).join('')}</div>
+   ${ui.permitMsg ? `<div class="note ok" role="status">${esc(ui.permitMsg)}</div>` : ''}
+   <button class="btn block ${all ? 'ok' : ''}" data-act="permit-ok" ${all ? '' : 'disabled'}>${all ? 'Autoriser le démarrage' : 'Cochez tous les points (' + (P.items.length - done) + ' restant' + (P.items.length - done > 1 ? 's' : '') + ')'}</button>
+   <span class="tiny muted">Aide à la vérification : ne remplace pas le permis signé selon les procédures du site.</span>
+   <div class="stack-s"><h2>Permis actifs</h2><div class="card flush list">${act.length ? act.map(p => `<div class="row"><span class="score lv-low">${svg('clip',18)}</span><span class="grow"><strong>${esc(PERMITS[p.kind] ? PERMITS[p.kind].title : p.kind)}${p.equipName ? ' · ' + esc(p.equipName) : ''}</strong><span class="tiny muted">${esc(dmy(p.at))} ${esc(hhmm(p.at))} · <span data-uid="${esc(p.by || '')}">…</span></span></span><button class="btn sm" data-act="permit-close" data-id="${esc(p.id)}">Clore</button></div>`).join('') : '<div class="empty">Aucun permis actif.</div>'}</div></div>`;
+ },
+
+ solutions() {
+  const d = DM[ui.sol];
+  const H = [['1','Supprimer le danger',d.e,'var(--ok-soft)','var(--ok-ink)'],['2','Protection collective',d.c,'var(--accent-soft)','var(--accent-ink)'],['3','Organisation et formation',d.o,'var(--warn-soft)','var(--warn-ink)'],['4','EPI (dernier recours)',d.p,'var(--high-soft)','var(--high-ink)']];
+  return `${backLink('#accueil', 'Solutions')}
+   <div class="chips scroll">${D.map(x => `<button class="chip" aria-pressed="${ui.sol === x.id}" data-act="sol" data-v="${x.id}">${x.label}</button>`).join('')}</div>
+   <div class="card stack-s" style="background:var(--accent);color:var(--accent-fg);border:0"><h2 style="font-size:21px">${esc(d.label)}</h2><span class="small">${esc(d.ex)}</span><span class="small"><strong>Permis :</strong> ${esc(d.permis)}</span><span class="small"><strong>Référence :</strong> ${esc(d.ref)}</span></div>
+   ${H.map(([n, t, items, bg, fg]) => `<div class="card stack-s hier"><div style="display:flex;align-items:center;gap:10px"><span class="n" style="background:${bg};color:${fg}">${n}</span><h3>${t}</h3></div><ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}
+   <div class="redbox stack-s"><h3>En cas d’accident</h3><ol>${d.u.map(i => `<li>${esc(i)}</li>`).join('')}</ol></div>`;
+ },
+
+ urgences() {
+  return `<div class="stack-s"><h1>Urgences</h1><span class="small muted">Sur le site, appelez d’abord le poste de garde</span></div>
+   ${numbersCard()}
+   <div class="card stack-s"><h2>Alerte POI : les réflexes</h2><ol>
+    <li>Mettre son installation en sécurité si possible</li><li>Regarder la manche à air, s’éloigner perpendiculairement au vent</li>
+    <li>Rejoindre ${esc(S.cfg.rassemblement || '[POINT DE RASSEMBLEMENT]')} ou se confiner selon la consigne</li><li>Se signaler au comptage, entreprises extérieures comprises</li></ol></div>
+   <div class="card stack-s"><h2>Délais légaux</h2>
+    ${[['12 h','Inspection du travail en cas de décès'],['24 h','Agence d’intérim pour un intérimaire'],['48 h','Déclaration à la CPAM (hors dimanches et jours fériés)'],['Vite','DREAL pour un accident ou incident lié à l’installation']].map(([a, b]) => `<div style="display:flex;gap:12px;align-items:baseline"><strong style="flex:0 0 56px;font-family:var(--display);font-size:18px;color:var(--accent)">${a}</strong><span class="small">${b}</span></div>`).join('')}</div>`;
+ },
+
+ formation() {
+  const n = SLIDES.length, i = Math.min(ui.slide, n), myForm = S.formation.find(f => f.id === S.me.id);
+  if (i === n) return quizView(myForm);
+  const s = SLIDES[i];
+  return `${backLink('#accueil', 'Formation : droit d’arrêt', 'Diapositive ' + (i + 1) + ' sur ' + n)}
+   ${myForm ? `<div class="note ok small">Formation validée le ${esc(dmy(myForm.at))} (${myForm.score}/${QUIZ.length}).</div>` : ''}
+   <a href="${s.img}" target="_blank" rel="noopener" aria-label="Agrandir la diapositive ${i + 1}"><img class="slideimg" src="${s.img}" alt="Diapositive ${i + 1} : ${esc(s.title)}"></a>
+   <div class="dots" role="group" aria-label="Choisir une diapositive">${SLIDES.map((_, k) => `<button data-act="slide-go" data-v="${k}" aria-current="${k === i}" aria-label="Diapositive ${k + 1}">${k + 1}</button>`).join('')}<button data-act="slide-go" data-v="${n}" aria-label="Quiz" style="width:auto;padding:0 10px">Quiz</button></div>
+   <div class="card stack-s"><span class="tiny" style="color:var(--high-ink);font-weight:700;letter-spacing:.06em;text-transform:uppercase">${esc(s.sec)}</span><h2>${esc(s.title)}</h2><ul>${s.pts.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+   <details class="card" data-notes ${ui.notesOpen ? 'open' : ''}><summary style="font-weight:600;cursor:pointer;min-height:28px">Notes de l’animateur</summary><p class="small" style="margin:10px 0 0;line-height:1.55">${esc(s.note)}</p></details>
+   <div class="grid2"><button class="btn" data-act="slide-prev" ${i === 0 ? 'disabled' : ''}>← Précédente</button><button class="btn primary" data-act="slide-next">${i === n - 1 ? 'Passer le quiz →' : 'Suivante →'}</button></div>
+   <button class="btn block" data-act="present">Mode présentation (réunion, écran)</button>
+   ${ui.present ? presentView() : ''}`;
+ },
+
+ stop() {
+  const d = ui.stop, open = S.stops.filter(s => s.status !== 'clos'), closed = S.stops.filter(s => s.status === 'clos').slice(0, 5);
+  return `${backLink('#accueil', 'Droit d’arrêt de travail', 'Je vois. J’agis. STOP !')}
+   <div class="note warn small"><strong>Personne ne sera jamais sanctionné</strong> pour avoir arrêté un travail par souci de sécurité. Dans le doute, on s’arrête.</div>
+   ${ui.stopMsg ? `<div class="note ok" role="status">${esc(ui.stopMsg)}</div>` : ''}
+   <div class="card stack"><h2>J’arrête un travail</h2>
+    <div class="note info small"><strong>D’abord :</strong> arrêtez l’activité et mettez la zone en sécurité. Danger grave et imminent ? Utilisez plutôt le <a href="#sos">SOS</a>.</div>
+    <div class="stack-s"><span class="label">Pourquoi ?</span><div class="chips">${STOP_M.map(m => `<button class="chip" style="white-space:normal;text-align:left;line-height:1.25;padding-block:8px" aria-pressed="${d.motif === m}" data-act="stop-motif" data-v="${esc(m)}">${esc(m)}</button>`).join('')}</div></div>
+    <div class="field"><label for="stopLieu">Où ?</label><input class="input" id="stopLieu" data-bind="stop.lieu" value="${esc(d.lieu || (lastEquip ? lastEquip.nom : ''))}" placeholder="Ex. : Rack 3, unité de distillation"></div>
+    <div class="field"><label for="stopDesc">Le danger que je perçois</label><textarea class="input" id="stopDesc" data-bind="stop.desc" placeholder="Ex. : soudure prévue à 2 m d’un égout non obturé">${esc(d.desc)}</textarea><span class="tiny muted">Pour dicter, utilisez le micro du clavier.</span></div>
+    <button class="check" role="checkbox" aria-checked="${d.told}" data-act="stop-told"><span class="box">${svg('check',16,3)}</span><span style="flex:1">J’ai déjà prévenu mon superviseur et les personnes exposées</span></button>
+    ${ui.stopErr ? `<div class="note err small">${esc(ui.stopErr)}</div>` : ''}
+    <button class="btn block" style="background:#F2B705;border-color:#F2B705;color:#111A2B" data-act="stop-send" ${ui.stopBusy ? 'disabled' : ''}>${ui.stopBusy ? 'Enregistrement…' : 'Enregistrer l’arrêt'}</button></div>
+   <div class="stack-s"><h2>Arrêts en cours</h2>${open.length ? open.map(stopCard).join('') : '<div class="card empty">Aucun arrêt en cours.</div>'}</div>
+   ${closed.length ? `<div class="stack-s"><h2>Arrêts clos récemment</h2>${closed.map(stopCard).join('')}</div>` : ''}`;
+ },
+
+ reglages() {
+  if (!S.canEdit) return `${backLink('#accueil', 'Réglages')}<div class="card stack-s"><strong>Réservé au service HSE</strong><span class="small muted">Les réglages du site et la liste des équipements sont modifiables par les personnes qui ont le rôle HSE dans Vigie.</span></div>${accountSection()}`;
+  const c = ui.cfgDraft || (ui.cfgDraft = { siteName: S.cfg.siteName || '', poste: S.cfg.poste || '', rassemblement: S.cfg.rassemblement || '' });
+  const q = ui.eq;
+  return `${backLink('#accueil', 'Réglages du site')}
+   <div class="card stack"><h2>Informations du site</h2>
+    <div class="field"><label for="cName">Nom du site</label><input class="input" id="cName" data-bind="cfgDraft.siteName" value="${esc(c.siteName)}" placeholder="Ex. : Raffinerie de [VILLE]"></div>
+    <div class="field"><label for="cPoste">Numéro du poste de garde</label><input class="input" id="cPoste" data-bind="cfgDraft.poste" value="${esc(c.poste)}" inputmode="tel" placeholder="Ex. : 04 42 00 00 00 ou 2222"></div>
+    <div class="field"><label for="cRas">Point de rassemblement</label><input class="input" id="cRas" data-bind="cfgDraft.rassemblement" value="${esc(c.rassemblement)}" placeholder="Ex. : Parking nord, point R2"></div>
+    ${ui.cfgMsg ? `<div class="note ok small" role="status">${esc(ui.cfgMsg)}</div>` : ''}
+    <button class="btn primary" data-act="cfg-save">Enregistrer</button></div>
+   <div class="card stack"><h2>${q._edit ? 'Modifier l’équipement ' + esc(q.code) : 'Ajouter un équipement'}</h2>
+    <div class="grid2"><div class="field"><label for="eCode">Code</label><input class="input" id="eCode" data-bind="eq.code" value="${esc(q.code)}" placeholder="B12" ${q._edit ? 'readonly' : ''}></div><div class="field"><label for="eNom">Nom</label><input class="input" id="eNom" data-bind="eq.nom" value="${esc(q.nom)}" placeholder="Bac B12"></div></div>
+    <div class="grid2"><div class="field"><label for="eZone">Zone</label><input class="input" id="eZone" data-bind="eq.zone" value="${esc(q.zone)}" placeholder="Parc de stockage"></div><div class="field"><label for="eProd">Produit</label><input class="input" id="eProd" data-bind="eq.produit" value="${esc(q.produit)}" placeholder="Brut léger"></div></div>
+    <div class="field"><label for="eTags">Dangers signalés (séparés par des virgules)</label><input class="input" id="eTags" data-bind="eq.tags" value="${esc(q.tags)}" placeholder="Zone ATEX 1, H₂S possible, Espace confiné"></div>
+    <div class="field"><label for="eCons">Consignes avant intervention (une par ligne)</label><textarea class="input" id="eCons" data-bind="eq.consignes">${esc(q.consignes)}</textarea></div>
+    <div class="field"><label for="ePerm">Permis requis</label><input class="input" id="ePerm" data-bind="eq.permis" value="${esc(q.permis)}" placeholder="Permis de pénétrer + bon de consignation"></div>
+    ${ui.eqMsg ? `<div class="note ${ui.eqMsg.startsWith('✓') ? 'ok' : 'err'} small" role="status">${esc(ui.eqMsg.replace('✓ ', ''))}</div>` : ''}
+    <div class="chips"><button class="btn primary" data-act="eq-save">${q._edit ? 'Enregistrer' : 'Ajouter l’équipement'}</button>${q._edit ? '<button class="btn" data-act="eq-cancel">Annuler</button>' : ''}</div></div>
+   <div class="stack-s"><h2>Équipements et étiquettes QR</h2><span class="small muted">Téléchargez l’étiquette et collez-la sur l’équipement.</span>
+    ${S.equip.map(e => `<div class="card" style="display:flex;gap:12px;align-items:flex-start"><img class="qr" src="${qrUrl(e.code)}" alt="QR code de ${esc(e.nom)}"><div class="stack-s" style="flex:1;min-width:0"><strong>${esc(e.nom)} <span class="badge lv-info">${esc(e.code)}</span></strong><span class="tiny muted">${esc(e.zone || '')}${e.exemple ? ' · exemple' : ''}</span>
+     <div class="chips">${downloads ? `<button class="btn sm" data-act="eq-dl" data-v="${esc(e.code)}">Étiquette PNG</button>` : ''}<button class="btn sm" data-act="eq-edit" data-v="${esc(e.code)}">Modifier</button><button class="btn sm" data-act="eq-del" data-v="${esc(e.code)}" style="${ui.confirmDel === e.code ? 'background:var(--danger);color:var(--danger-on);border-color:var(--danger)' : ''}">${ui.confirmDel === e.code ? 'Confirmer la suppression' : 'Supprimer'}</button></div></div></div>`).join('') || '<div class="card empty">Aucun équipement.</div>'}</div>${accountSection()}`;
+ }
+};
+
+/* ---------- Fragments ---------- */
+function stopSign(s) { return `<svg width="${s}" height="${s}" viewBox="0 0 64 64" aria-hidden="true"><polygon points="20,2 44,2 62,20 62,44 44,62 20,62 2,44 2,20" fill="#D92D20" stroke="#FFFFFF" stroke-width="3"/><text x="32" y="38" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-weight="800" font-size="15" fill="#FFFFFF">STOP</text></svg>`; }
+function presentView() {
+  const n = SLIDES.length, i = Math.min(ui.slide, n - 1);
+  return `<div class="present" role="dialog" aria-label="Mode présentation"><img src="${SLIDES[i].img}" alt="Diapositive ${i + 1} : ${esc(SLIDES[i].title)}"><button class="zone" style="left:0" data-act="slide-prev" aria-label="Précédente"></button><button class="zone" style="right:0" data-act="pres-next" aria-label="Suivante"></button>
+   <div class="bar2"><button data-act="slide-prev" ${i === 0 ? 'disabled' : ''} aria-label="Précédente">←</button><span>${i + 1} / ${n}</span><button data-act="pres-next" ${i === n - 1 ? 'disabled' : ''} aria-label="Suivante">→</button><button data-act="present-close">Fermer</button></div></div>`;
+}
+function quizView(myForm) {
+  const r = ui.quizResult;
+  return `${backLink('#accueil', 'Quiz : droit d’arrêt', QUIZ.length + ' questions · ' + QUIZ_PASS + ' bonnes réponses pour valider')}
+   ${myForm && !r ? `<div class="note ok small">Formation déjà validée le ${esc(dmy(myForm.at))}. Vous pouvez repasser le quiz.</div>` : ''}
+   ${r ? `<div class="note ${r.ok ? 'ok' : 'warn'}" role="status"><strong>${r.score} / ${QUIZ.length}</strong> · ${r.ok ? 'Formation validée. Elle est enregistrée et visible par le service HSE.' : 'Pas encore validée : revoyez les explications ci-dessous et recommencez.'}</div>` : ''}
+   ${QUIZ.map((q, k) => {
+     const a = ui.quiz[k];
+     return `<div class="card stack-s"><strong class="small">${k + 1}. ${esc(q.q)}</strong><div class="stack-s">${q.o.map((o, j) => {
+       let st = '';
+       if (r) st = j === q.a ? 'border-color:var(--ok);background:var(--ok-soft);color:var(--ok-ink)' : (a === j ? 'border-color:var(--danger);background:var(--danger-soft);color:var(--danger-ink)' : '');
+       return `<button class="chip" style="white-space:normal;text-align:left;min-height:44px;padding:8px 14px;border-radius:12px;${st}" aria-pressed="${a === j}" data-act="quiz-pick" data-k="${k}" data-v="${j}" ${r ? 'disabled' : ''}>${esc(o)}</button>`;
+     }).join('')}</div>${r ? `<span class="tiny muted">${esc(q.why)}</span>` : ''}</div>`;
+   }).join('')}
+   ${ui.quizErr ? `<div class="note err small">${esc(ui.quizErr)}</div>` : ''}
+   ${r ? `<div class="grid2"><button class="btn" data-act="quiz-reset">Recommencer</button><button class="btn primary" data-act="slide-go" data-v="0">Revoir les diapositives</button></div>` : `<button class="btn primary block" data-act="quiz-submit">Valider mes réponses</button><button class="btn ghost" data-act="slide-go" data-v="${SLIDES.length - 1}">← Retour aux diapositives</button>`}`;
+}
+function stopCard(s) {
+  const step = s.step || 1, closed = s.status === 'clos', notes = ui.stopNotes[s.id] || '', showLog = ui.stopLog === s.id;
+  return `<div class="card stack-s">
+   <div style="display:flex;gap:10px;align-items:flex-start"><span style="flex:0 0 auto">${stopSign(34)}</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><strong class="small">${esc(s.motif || 'Arrêt de travail')}</strong><span class="tiny muted">${esc(s.lieu || 'Lieu non précisé')} · ${esc(dmy(s.at))} ${esc(hhmm(s.at))} · <span data-uid="${esc(s.by || '')}">…</span></span></span><span class="badge ${closed ? 'lv-done' : step >= 5 ? 'lv-low' : 'lv-high'}">${closed ? 'Clos' : step >= 5 ? 'Travail repris' : 'Arrêté'}</span></div>
+   ${s.desc ? `<span class="small">${esc(s.desc)}</span>` : ''}
+   <div class="tracker" aria-label="Étapes du droit d’arrêt">${STOP_S.map((l, k) => `<span class="${k < step ? 'done' : (k === step && !closed ? 'next' : '')}"><i>${k < step ? '✓' : k + 1}</i>${esc(l)}</span>`).join('')}</div>
+   ${!closed ? `<div class="field"><label for="sn-${esc(s.id)}" class="small">Étape ${step + 1} · ${esc(STOP_S[step])} : commentaire (facultatif)</label><input class="input" id="sn-${esc(s.id)}" data-stopnote="${esc(s.id)}" value="${esc(notes)}" placeholder="${step === 2 ? 'Ex. : cause identifiée, égout non obturé' : step === 3 ? 'Ex. : égout obturé, zone inspectée par le HSE' : step === 4 ? 'Ex. : situation sûre pour tous, reprise à 10 h' : 'Ex. : retour d’expérience partagé en causerie'}"></div>
+    <button class="btn ${step === 4 ? 'ok' : 'primary'}" data-act="stop-next" data-id="${esc(s.id)}">Valider : ${esc(STOP_S[step])}</button>` : ''}
+   ${(s.log || []).length ? `<button class="btn ghost sm" data-act="stop-log" data-id="${esc(s.id)}" aria-expanded="${showLog}">${showLog ? 'Masquer' : 'Voir'} l’historique (${s.log.length})</button>${showLog ? `<ol>${s.log.map(e => `<li class="small"><strong>${esc(STOP_S[e.step - 1] || '')}</strong> · ${esc(dmy(e.at))} ${esc(hhmm(e.at))} · <span data-uid="${esc(e.by || '')}">…</span>${e.note ? ' · ' + esc(e.note) : ''}</li>`).join('')}</ol>` : ''}` : ''}
+  </div>`;
+}
+function emptyState(msg, href, cta) { return `<div class="empty"><div>${esc(msg)}</div>${href ? `<a class="btn sm" style="margin-top:10px" href="${href}">${esc(cta)}</a>` : ''}</div>`; }
+function riskRowSimple(r) { const v = r.p * r.g, L = lvl(v); return `<a class="row" href="#risques"><span class="score ${L.cls}">${v}</span><span class="grow"><strong>${esc(r.zone)}</strong><span class="tiny muted">${esc(DM[r.danger] ? DM[r.danger].label : r.danger)} · ${L.label}${r.exemple ? ' · exemple' : ''}</span></span></a>`; }
+function riskCard(r) {
+  const v = r.p * r.g, L = r.done ? {label:'Traité',cls:'lv-done',action:'Mesures en place, à réévaluer'} : lvl(v), d = DM[r.danger] || D[0], open = ui.openRisk === r.id;
+  return `<div class="card flush"><button class="row" aria-expanded="${open}" data-act="risk-open" data-id="${esc(r.id)}"><span class="score ${L.cls}">${v}</span><span class="grow"><strong>${esc(r.zone)}</strong><span class="tiny muted">${esc(d.label)} · ${L.label}${r.exemple ? ' · exemple' : ''}</span></span><span style="transform:rotate(${open ? 90 : 0}deg);display:flex;color:var(--muted)">${svg('chev',18)}</span></button>
+   ${open ? `<div class="stack-s small" style="padding:0 16px 16px"><div class="sep"></div><span><strong>À faire :</strong> ${L.action}</span><span><strong>Solution prioritaire :</strong> ${esc(d.e[0])}</span><span><strong>Protection collective :</strong> ${esc(d.c[0])}</span><span><strong>Permis :</strong> ${esc(d.permis)}</span><span class="tiny muted">Évalué ${r.at ? esc(dmy(r.at)) : ''} par <span data-uid="${esc(r.by || '')}">…</span></span><div class="chips"><button class="btn sm" data-act="risk-done" data-id="${esc(r.id)}">${r.done ? 'Rouvrir' : 'Marquer traité'}</button><a class="btn sm" href="#solutions" data-act="sol-go" data-v="${esc(r.danger)}">Toutes les solutions</a></div></div>` : ''}</div>`;
+}
+function incRowSimple(i) { const d = DM[i.type] || D[0]; return `<a class="row" href="#evenements"><span class="score ${nivCls(i.niv)}" style="font-size:12px">${esc(NIV[i.niv] ? NIV[i.niv].slice(0, 3) : '')}</span><span class="grow"><strong>${esc(d.label)} · ${esc(NIV[i.niv] || '')}</strong><span class="tiny muted">${esc(i.lieu || 'Lieu non précisé')} · ${esc(ago(i.at))}</span></span>${i.photoId || i.photoDoc ? `<span class="tiny muted">${svg('cam',16)}</span>` : ''}</a>`; }
+function incCard(i) {
+  const d = DM[i.type] || D[0], st = INC_ST[i.status || 'nouveau'] || INC_ST.nouveau, open = ui.openInc === i.id;
+  let photo = '';
+  if (open) {
+    if (i.photoId) photo = `<img class="photo" src="/_blob/${esc(i.photoId)}" alt="Photo de l’événement">`;
+    else if (i.photoDoc) { if (photoCache[i.id]) photo = `<img class="photo" src="${esc(photoCache[i.id])}" alt="Photo de l’événement">`; else { photo = '<div class="photo" style="display:grid;place-items:center" aria-busy="true"><span class="small muted">Chargement de la photo…</span></div>'; loadPhoto(i.id); } }
+  }
+  return `<div class="card flush"><button class="row" aria-expanded="${open}" data-act="inc-open" data-id="${esc(i.id)}"><span class="score ${nivCls(i.niv)}" style="font-size:12px">${esc((NIV[i.niv] || '').slice(0, 3))}</span><span class="grow"><strong>${esc(d.label)} · ${esc(NIV[i.niv] || '')}</strong><span class="tiny muted">${esc(i.lieu || 'Lieu non précisé')} · ${esc(dmy(i.at))} ${esc(hhmm(i.at))}</span></span><span class="badge ${st.cls}">${st.label}</span></button>
+   ${open ? `<div class="stack-s" style="padding:0 16px 16px"><div class="sep"></div>${photo}<span class="small">${esc(i.desc || 'Pas de description.')}</span><span class="tiny muted">${esc(VIC[i.vic] || '')}${i.ind ? ' · fuite, feu ou rejet' : ''} · déclaré par <span data-uid="${esc(i.by || '')}">…</span></span>
+    <div class="redbox stack-s"><h3>Démarches</h3><ol>${steps(i).map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>
+    <div class="chips">${Object.keys(INC_ST).map(k => `<button class="chip" aria-pressed="${(i.status || 'nouveau') === k}" data-act="inc-status" data-id="${esc(i.id)}" data-v="${k}">${INC_ST[k].label}</button>`).join('')}</div></div>` : ''}</div>`;
+}
+function steps(i) {
+  const s = [];
+  if (i.niv === 5) s.push('Informer l’inspection du travail dans les 12 heures suivant le décès');
+  if (i.ind) { s.push('Alerter la salle de contrôle, déclencher le POI si nécessaire'); s.push('Déclarer à l’inspection des installations classées (DREAL) dans les meilleurs délais'); }
+  if (i.niv === 1) s.push('Partager le presque-accident en causerie sécurité');
+  else if (i.vic === 'int') { s.push('Informer l’agence d’intérim dans les 24 heures : elle déclare à la CPAM'); s.push('Informer le service prévention de la Carsat et l’inspection du travail'); }
+  else if (i.vic === 'ee') { s.push('Prévenir l’employeur de la victime : il déclare à sa CPAM'); s.push('Revoir le plan de prévention avec l’entreprise extérieure'); }
+  else if (i.niv >= 2) { s.push('Déclarer l’accident à la CPAM sous 48 h (hors dimanches et jours fériés)'); if (i.niv >= 3) s.push('Remettre la feuille d’accident au salarié'); }
+  s.push('Informer le CSE');
+  s.push('Analyser les causes (arbre des causes) et mettre à jour le DUERP');
+  return s;
+}
+function declResult(i) {
+  const d = DM[i.type] || D[0];
+  return `<div class="note ok" role="status"><strong>Déclaration envoyée au service HSE</strong><br><span class="small">${esc(d.label)} · ${esc(NIV[i.niv])}</span></div>
+   <div class="redbox stack-s"><h3>Premiers gestes</h3><ol>${d.u.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
+   <div class="card stack-s"><h2>Démarches obligatoires</h2><ol>${steps(i).map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
+   <div class="card stack-s"><h2>Pour éviter la récidive</h2><ul>${[d.e[0], ...d.c.slice(0, 2), d.o[0]].map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+   <div class="grid2"><a class="btn" href="#evenements">Voir le journal</a><button class="btn primary" data-act="decl-new">Nouvelle déclaration</button></div>`;
+}
+function numbersCard() {
+  const poste = S.cfg.poste || (window.VIGIE_CONFIG || {}).posteGarde || '';
+  const rows = [[poste || '[NUMÉRO INTERNE]', 'Poste de garde du site', 'Toujours en premier', poste], ['18', 'Sapeurs-pompiers', 'Incendie, fuite, explosion', '18'], ['15', 'SAMU', 'Urgence médicale', '15'], ['112', 'Urgences européen', 'Depuis tout téléphone', '112'], ['114', 'Sourds et malentendants', 'SMS, visio, tchat', '114'], ['04 91 75 25 25', 'Centre antipoison', 'Marseille', '+33491752525']];
+  return `<div class="card flush list">${rows.map(([n, t, s, tel]) => `<div class="numrow"><span class="grow" style="display:flex;flex-direction:column;gap:2px;min-width:0"><strong class="small">${esc(t)}</strong><span class="tiny muted">${esc(s)}</span></span><span class="n" style="${n.length > 6 ? 'font-size:16px' : ''}">${tel ? `<a href="tel:${esc(tel.replace(/\s/g, ''))}" style="color:inherit;text-decoration:none">${esc(n)}</a>` : esc(n)}</span><button class="btn sm" data-act="copy" data-v="${esc(n)}" aria-label="Copier ${esc(n)}">${ui.copied === n ? 'Copié' : 'Copier'}</button></div>`).join('')}</div>`;
+}
+function equipSheet(code) {
+  const e = S.equip.find(x => x.code === code);
+  if (!e) return `${backLink('#scanner', 'Équipement introuvable')}<div class="card"><span class="small">Le code ${esc(code)} ne correspond à aucun équipement enregistré.</span></div><button class="btn" data-act="sheet-close">Retour au scanner</button>`;
+  const rs = S.risks.filter(r => r.equip === e.code && !r.done).sort((a, b) => b.p * b.g - a.p * a.g);
+  return `<div class="top" style="justify-content:flex-start"><button class="iconbtn" data-act="sheet-close" aria-label="Retour au scanner">${svg('back')}</button><div><h1 style="font-size:22px">${esc(e.nom)}</h1><span class="small muted">${esc(e.zone || '')}${e.produit ? ' · ' + esc(e.produit) : ''}</span></div></div>
+   ${(e.tags || []).length ? `<div class="chips">${e.tags.map(t => `<span class="badge lv-high" style="font-size:13px;padding:5px 10px">${esc(t)}</span>`).join('')}</div>` : ''}
+   ${e.exemple ? '<span class="tiny muted">Fiche d’exemple : remplacez-la par la fiche réelle dans Réglages.</span>' : ''}
+   <div class="stack-s"><h2>Risques de cet équipement</h2><div class="card flush list">${rs.length ? rs.map(riskRowSimple).join('') : '<div class="empty">Aucun risque ouvert lié à cet équipement.</div>'}</div></div>
+   ${(e.consignes || []).length ? `<div class="card stack-s"><h2>Avant toute intervention</h2><ul>${e.consignes.map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>` : ''}
+   ${e.permis ? `<div class="note info small"><strong>Permis requis :</strong> ${esc(e.permis)}</div>` : ''}
+   <div class="grid2"><a class="btn primary" href="#permis" data-act="to-permit" data-v="${esc(e.code)}">Check-list permis</a><a class="btn" href="#declarer" data-act="to-decl" data-v="${esc(e.code)}">Déclarer ici</a></div>`;
+}
+function qrUrl(code) { try { const q = qrcode(0, 'M'); q.addData('VIGIE:' + code); q.make(); return q.createDataURL(4, 2); } catch { return ''; } }
+
+/* ---------- Actions ---------- */
+function setPath(obj, path, v) { const k = path.split('.'); let o = obj; for (let i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = v; }
+document.addEventListener('input', e => { const b = e.target.dataset && e.target.dataset.bind; if (b) setPath(ui, b, e.target.value); const sn = e.target.dataset && e.target.dataset.stopnote; if (sn) ui.stopNotes[sn] = e.target.value; });
+document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('details[data-notes]')) ui.notesOpen = e.target.open; }, true);
+document.addEventListener('keydown', e => { if (!ui.present || route() !== 'formation') return; if (e.key === 'ArrowRight' && ui.slide < SLIDES.length - 1) { ui.slide++; render(true); } else if (e.key === 'ArrowLeft' && ui.slide > 0) { ui.slide--; render(true); } else if (e.key === 'Escape') { ui.present = false; render(true); } });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && ui.present) { ui.present = false; render(true); } });
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.bind && t.tagName === 'SELECT') { setPath(ui, t.dataset.bind, t.value); render(true); }
+  if (t.dataset && t.dataset.file && t.files && t.files[0]) { const f = t.files[0]; if (t.dataset.file === 'photo') setPhoto(f); else decodeQr(f); }
+});
+function setPhoto(f) { if (ui.photoUrl) URL.revokeObjectURL(ui.photoUrl); ui.photoFile = f; ui.photoUrl = URL.createObjectURL(f); render(true); }
+function persistDraft() { const l = $('#lieu'); if (l) ui.decl.lieu = l.value; }
+
+const need = () => { if (!db) { throw new Error('offline'); } };
+async function guard(fn, onErr) { try { await fn(); } catch (e) { onErr && onErr(e && e.code === 'quota_exceeded' ? 'La base est pleine : supprimez d’anciens éléments.' : (e && e.message === 'offline' ? 'Données partagées indisponibles sur cet affichage.' : 'L’enregistrement a échoué. Réessayez dans un instant.')); render(true); } }
+
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, v = el.dataset.v, id = el.dataset.id;
+  switch (a) {
+    case 'sos-type': ui.sosType = v; return render(true);
+    case 'sos-take': return guard(async () => { need(); await db.doc('sos/' + id).update({ status: 'prise', takenBy: S.me.id, takenAt: new Date().toISOString() }); });
+    case 'sos-close': return guard(async () => { need(); await db.doc('sos/' + id).update({ status: 'close', closedBy: S.me.id, closedAt: new Date().toISOString() }); if (ui.mySos === id) ui.mySos = null; render(true); });
+    case 'decl': persistDraft(); ui.decl[el.dataset.k] = el.dataset.k === 'niv' ? +v : v; return render(true);
+    case 'decl-ind': persistDraft(); ui.decl.ind = !ui.decl.ind; return render(true);
+    case 'photo-del': if (ui.photoUrl) URL.revokeObjectURL(ui.photoUrl); ui.photoFile = null; ui.photoUrl = null; return render(true);
+    case 'decl-send': persistDraft(); return sendDecl();
+    case 'decl-new': ui.declDone = null; ui.decl = { type: 'atex', niv: 1, vic: 'aucune', ind: false, lieu: '', desc: '' }; ui.aiMsg = ''; return render(true);
+    case 'ai-fill': persistDraft(); return aiFill();
+    case 'inc-filter': ui.incFilter = v; return render(true);
+    case 'inc-open': ui.openInc = ui.openInc === id ? null : id; return render(true);
+    case 'inc-status': return guard(async () => { need(); await db.doc('incidents/' + id).update({ status: v, statusBy: S.me.id, statusAt: new Date().toISOString() }); });
+    case 'risk-filter': ui.riskFilter = v; return render(true);
+    case 'risk-open': ui.openRisk = ui.openRisk === id ? null : id; return render(true);
+    case 'risk-done': { const r = S.risks.find(x => x.id === id); return guard(async () => { need(); await db.doc('risks/' + id).update({ done: !(r && r.done), doneBy: S.me.id, doneAt: new Date().toISOString() }); }); }
+    case 'eval-toggle': ui.evalOpen = !ui.evalOpen; return render(true);
+    case 'ev': ui.ev[el.dataset.k] = el.dataset.k === 'danger' ? v : +v; return render(true);
+    case 'eval-add': { const z = ($('#evZone') || {}).value || ui.ev.zone; return guard(async () => { need(); await db.collection('risks').add({ zone: z.trim() || 'Opération non précisée', danger: ui.ev.danger, p: ui.ev.p, g: ui.ev.g, equip: ui.ev.equip || null, done: false, by: S.me.id, at: new Date().toISOString() }); ui.ev = { zone: '', danger: 'atex', p: 2, g: 2, equip: '' }; ui.evalOpen = false; ui.riskFilter = 'all'; render(true); }); }
+    case 'sol': ui.sol = v; return render(true);
+    case 'sol-go': ui.sol = v; return;
+    case 'code-open': { const c = (($('#code') || {}).value || '').trim().toUpperCase(); ui.manualCode = c; return openEquip(c); }
+    case 'sheet': return openEquip(v);
+    case 'sheet-close': ui.sheet = null; return render(true);
+    case 'to-permit': ui.permitEquip = v; return;
+    case 'to-decl': { const eq = S.equip.find(x => x.code === v); if (eq) ui.decl.lieu = eq.nom; return; }
+    case 'pk': ui.permitKind = v; ui.permitMsg = ''; return render(true);
+    case 'ck': { const k = ui.permitKind; ui.checks[k] = ui.checks[k] || {}; ui.checks[k][v] = !ui.checks[k][v]; ui.permitMsg = ''; return render(true); }
+    case 'permit-ok': {
+      const code = ui.permitEquip || (lastEquip && lastEquip.code) || '', eq = S.equip.find(x => x.code === code);
+      return guard(async () => { need(); await db.collection('permits').add({ kind: ui.permitKind, equip: code || null, equipName: eq ? eq.nom : null, status: 'actif', by: S.me.id, at: new Date().toISOString() }); ui.checks[ui.permitKind] = {}; ui.permitMsg = 'Démarrage autorisé à ' + hhmm(new Date().toISOString()) + '. Le permis est visible par toute l’équipe.'; render(true); }, m => { ui.permitMsg = m; });
+    }
+    case 'permit-close': return guard(async () => { need(); await db.doc('permits/' + id).update({ status: 'clos', closedBy: S.me.id, closedAt: new Date().toISOString() }); });
+    case 'copy': { try { await navigator.clipboard.writeText(v); ui.copied = v; } catch { ui.copied = ''; } render(true); setTimeout(() => { ui.copied = ''; render(); }, 1600); return; }
+    case 'cfg-save': { readCfg(); return guard(async () => { need(); await db.doc('config/site').set({ siteName: ui.cfgDraft.siteName.trim(), poste: ui.cfgDraft.poste.trim(), rassemblement: ui.cfgDraft.rassemblement.trim() }); ui.cfgMsg = 'Réglages enregistrés pour toute l’équipe.'; render(true); }, m => ui.cfgMsg = m); }
+    case 'eq-save': return saveEquip();
+    case 'eq-cancel': ui.eq = { code: '', nom: '', zone: '', produit: '', tags: '', consignes: '', permis: '' }; ui.eqMsg = ''; return render(true);
+    case 'eq-edit': { const q = S.equip.find(x => x.code === v); if (q) ui.eq = { _edit: true, code: q.code, nom: q.nom || '', zone: q.zone || '', produit: q.produit || '', tags: (q.tags || []).join(', '), consignes: (q.consignes || []).join('\n'), permis: q.permis || '' }; ui.eqMsg = ''; render(true); window.scrollTo(0, 0); return; }
+    case 'eq-del': if (ui.confirmDel !== v) { ui.confirmDel = v; return render(true); } ui.confirmDel = null; return guard(async () => { need(); await db.doc('equip/' + v).delete(); });
+    case 'eq-dl': return downloadLabel(v);
+    case 'auth-send': return authSend();
+    case 'auth-verify': return authVerify();
+    case 'auth-back': AUTH.step = 'email'; AUTH.msg = ''; return render(true);
+    case 'auth-name': return authName();
+    case 'auth-refresh': AUTH.msg = ''; return afterLogin(AUTH.session);
+    case 'logout': try { await sb.auth.signOut(); } catch {} location.hash = ''; location.reload(); return;
+    case 'notif': try { await Notification.requestPermission(); } catch {} return render(true);
+    case 'member': return setMember(id, el.dataset.active === '1', el.dataset.role);
+    case 'slide-go': ui.slide = +v; ui.quizResult = null; ui.quizErr = ''; render(true); window.scrollTo(0, 0); return;
+    case 'slide-prev': if (ui.slide > 0) ui.slide--; return render(true);
+    case 'slide-next': ui.slide = Math.min(SLIDES.length, ui.slide + 1); render(true); if (!ui.present) window.scrollTo(0, 0); return;
+    case 'pres-next': if (ui.slide < SLIDES.length - 1) ui.slide++; return render(true);
+    case 'present': ui.present = true; ui.slide = Math.min(ui.slide, SLIDES.length - 1); render(true); try { await document.documentElement.requestFullscreen(); } catch {} try { await screen.orientation.lock('landscape'); } catch {} return;
+    case 'present-close': ui.present = false; try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {} return render(true);
+    case 'quiz-pick': ui.quiz[+el.dataset.k] = +v; ui.quizErr = ''; return render(true);
+    case 'quiz-reset': ui.quiz = {}; ui.quizResult = null; render(true); window.scrollTo(0, 0); return;
+    case 'quiz-submit': {
+      if (QUIZ.some((_, k) => ui.quiz[k] === undefined)) { ui.quizErr = 'Répondez à toutes les questions.'; return render(true); }
+      const score = QUIZ.filter((q, k) => ui.quiz[k] === q.a).length, ok = score >= QUIZ_PASS;
+      ui.quizResult = { score, ok };
+      if (ok) await guard(async () => { need(); await db.doc('formation/' + S.me.id).set({ module: 'droit-arret', score, total: QUIZ.length, by: S.me.id, at: new Date().toISOString() }); }, m => { ui.quizErr = 'Quiz réussi, mais l’enregistrement a échoué : ' + m; });
+      render(true); window.scrollTo(0, 0); return;
+    }
+    case 'stop-motif': ui.stop.motif = v; ui.stop.lieu = ($('#stopLieu') || {}).value ?? ui.stop.lieu; ui.stop.desc = ($('#stopDesc') || {}).value ?? ui.stop.desc; ui.stopErr = ''; return render(true);
+    case 'stop-told': ui.stop.told = !ui.stop.told; ui.stop.lieu = ($('#stopLieu') || {}).value ?? ui.stop.lieu; ui.stop.desc = ($('#stopDesc') || {}).value ?? ui.stop.desc; return render(true);
+    case 'stop-send': {
+      const lieu = (($('#stopLieu') || {}).value || '').trim(), desc = (($('#stopDesc') || {}).value || '').trim();
+      if (!ui.stop.motif) { ui.stopErr = 'Choisissez pourquoi vous arrêtez le travail.'; return render(true); }
+      ui.stopBusy = true; ui.stopErr = ''; render(true);
+      const now = new Date().toISOString(), log = [{ step: 1, by: S.me.id, at: now, note: 'Zone mise en sécurité' }];
+      if (ui.stop.told) log.push({ step: 2, by: S.me.id, at: now, note: 'Superviseur et personnes exposées prévenus' });
+      await guard(async () => { need(); await db.collection('stops').add({ motif: ui.stop.motif, lieu, desc, equip: lastEquip ? lastEquip.code : null, step: log.length, log, status: 'arrete', by: S.me.id, at: now }); ui.stop = { motif: '', lieu: '', desc: '', told: false }; ui.stopMsg = 'Arrêt enregistré. ' + (log.length === 1 ? 'Prévenez maintenant votre superviseur.' : 'Analysez maintenant la situation avec votre superviseur.') + ' Merci d’avoir agi.'; }, m => { ui.stopErr = m; });
+      ui.stopBusy = false; render(true); window.scrollTo(0, 0); return;
+    }
+    case 'stop-next': {
+      const s = S.stops.find(x => x.id === id); if (!s) return;
+      const inp = document.getElementById('sn-' + id), note = ((inp && inp.value) || ui.stopNotes[id] || '').trim(), next = (s.step || 1) + 1;
+      const log = (s.log || []).concat([{ step: next, by: S.me.id, at: new Date().toISOString(), note }]);
+      await guard(async () => { need(); await db.doc('stops/' + id).update({ step: next, log, status: next >= 6 ? 'clos' : 'arrete' }); delete ui.stopNotes[id]; ui.stopMsg = next === 5 ? 'Reprise du travail enregistrée.' : next === 6 ? 'Arrêt clos : merci pour le suivi.' : ''; }, m => { ui.stopErr = m; });
+      return render(true);
+    }
+    case 'stop-log': ui.stopLog = ui.stopLog === id ? null : id; return render(true);
+    case 'install': if (deferredPrompt) { deferredPrompt.prompt(); try { await deferredPrompt.userChoice; } catch {} deferredPrompt = null; render(true); } return;
+  }
+});
+function readCfg() { ['cName:siteName', 'cPoste:poste', 'cRas:rassemblement'].forEach(p => { const [i, k] = p.split(':'); const el = $('#' + i); if (el) ui.cfgDraft[k] = el.value; }); }
+
+/* SOS : maintien 1,5 s */
+function holdStart(ev) { const b = ev.target.closest && ev.target.closest('#holdBtn'); if (!b || holdT) return; ev.preventDefault(); b.classList.add('holding'); holdT = setTimeout(() => { holdT = null; b.classList.remove('holding'); sendSos(); }, 1500); }
+function holdEnd() { if (holdT) { clearTimeout(holdT); holdT = null; } const b = $('#holdBtn'); if (b) b.classList.remove('holding'); if (pending) setTimeout(() => render(), 0); }
+document.addEventListener('pointerdown', holdStart);
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => document.addEventListener(t, ev => { if (!ev.target.closest || ev.target.closest('#holdBtn') || t !== 'pointerleave') holdEnd(); }, true));
+document.addEventListener('keydown', ev => { if ((ev.key === ' ' || ev.key === 'Enter') && !ev.repeat && document.activeElement && document.activeElement.id === 'holdBtn') holdStart(ev); });
+document.addEventListener('keydown', ev => { if (ev.key !== 'Enter' || !AUTH.need) return; const id = document.activeElement && document.activeElement.id; const m = { authEmail: 'auth-send', authCode: 'auth-verify', authNom: 'auth-name' }[id]; if (m) { ev.preventDefault(); const b = document.querySelector('[data-act="' + m + '"]'); if (b) b.click(); } });
+document.addEventListener('keyup', ev => { if (ev.key === ' ' || ev.key === 'Enter') holdEnd(); });
+document.addEventListener('contextmenu', ev => { if (ev.target.closest && ev.target.closest('#holdBtn')) ev.preventDefault(); });
+
+async function sendSos() {
+  const lieu = (($('#sosLieu') || {}).value || ui.sosLieu || '').trim();
+  ui.sosErr = '';
+  try {
+    need();
+    const ref = await db.collection('sos').add({ type: ui.sosType, lieu, equip: lastEquip ? lastEquip.code : null, equipName: lastEquip ? lastEquip.nom : null, status: 'active', by: S.me.id, at: new Date().toISOString() });
+    ui.mySos = ref.id; ui.sosLieu = '';
+    try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch {}
+  } catch (e) { ui.sosErr = 'L’alerte n’a pas pu être envoyée. Appelez le poste de garde : ' + (S.cfg.poste || 'numéro interne') + '.'; }
+  render(true);
+}
+
+/* Déclaration */
+async function compress(file, max = 1100, q = 0.72) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+async function sendDecl() {
+  const d = ui.decl, desc = (($('#desc') || {}).value || d.desc).trim();
+  ui.declErr = ''; ui.declBusy = true; render(true);
+  try {
+    need();
+    const ref = db.collection('incidents').doc();
+    const doc = { type: d.type, niv: d.niv, vic: d.vic, ind: d.ind, lieu: (d.lieu || (lastEquip ? lastEquip.nom : '')).trim(), desc, equip: lastEquip ? lastEquip.code : null, status: 'nouveau', by: S.me.id, at: new Date().toISOString() };
+    if (ui.photoFile) {
+      try {
+        const c = await compress(ui.photoFile);
+        let done = false;
+        if (assets) { try { const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.75)); const up = await assets.upload(blob, { type: 'image/jpeg' }); doc.photoId = up.id; done = true; } catch {} }
+        if (!done) {
+          let data = c.toDataURL('image/jpeg', 0.6);
+          if (data.length > 240000) { const c2 = await compress(ui.photoFile, 700, 0.55); data = c2.toDataURL('image/jpeg', 0.55); }
+          if (data.length < 240000) { await db.doc('photos/' + ref.id).set({ data, at: doc.at }); doc.photoDoc = true; photoCache[ref.id] = data; }
+        }
+      } catch {}
+    }
+    await ref.set(doc);
+    ui.declDone = doc;
+    if (ui.photoUrl) URL.revokeObjectURL(ui.photoUrl); ui.photoFile = null; ui.photoUrl = null;
+  } catch (e) { ui.declErr = e && e.message === 'offline' ? 'Données partagées indisponibles : la déclaration n’est pas enregistrée.' : 'L’envoi a échoué. Vérifiez la connexion et réessayez.'; }
+  ui.declBusy = false; render(true); window.scrollTo(0, 0);
+}
+async function aiFill() {
+  const desc = (($('#desc') || {}).value || ui.decl.desc).trim();
+  ui.decl.desc = desc;
+  if (!desc && !ui.photoFile) { ui.aiMsg = 'Décrivez d’abord l’événement (ou dictez-le), ou ajoutez une photo.'; return render(true); }
+  ui.aiBusy = true; ui.aiMsg = ''; render(true);
+  const prompt = `Tu aides un opérateur d'un site pétrochimique classé Seveso à remplir une déclaration d'événement. À partir de la description${ui.photoFile ? ' et de la photo jointe' : ''}, réponds uniquement avec un objet JSON :
+{"type": un de ${JSON.stringify(D.map(x => x.id))}, "niv": 1 à 5 (1 presque-accident, 2 accident sans arrêt, 3 avec arrêt, 4 grave, 5 mortel), "vic": un de ["aucune","sal","int","ee"], "ind": true si fuite, feu ou rejet dans l'environnement, "lieu": lieu mentionné ou "", "resume": une phrase factuelle en français}
+Types : ${D.map(x => x.id + ' = ' + x.label).join(' ; ')}.
+Description : """${desc.slice(0, 3000)}"""`;
+  try {
+    const opts = { modelTier: 'quick' };
+    if (ui.photoFile) { try { const lim = await sample.limits(); if (lim && lim.images) opts.images = [ui.photoFile]; } catch {} }
+    const r = await sample.json(prompt, opts);
+    if (r && typeof r === 'object') {
+      if (DM[r.type]) ui.decl.type = r.type;
+      if ([1, 2, 3, 4, 5].includes(+r.niv)) ui.decl.niv = +r.niv;
+      if (VIC[r.vic]) ui.decl.vic = r.vic;
+      ui.decl.ind = r.ind === true;
+      if (r.lieu && !ui.decl.lieu) ui.decl.lieu = String(r.lieu).slice(0, 120);
+      if (!desc && r.resume) ui.decl.desc = String(r.resume).slice(0, 600);
+      ui.aiMsg = 'Formulaire pré-rempli : vérifiez chaque champ avant d’envoyer.';
+    }
+  } catch (e) {
+    if (e && (e.code === 'not_granted' || e.code === 'sampling_disabled' || e.code === 'not_declared' || e.code === 'capability_disabled' || e.code === 'capability_removed')) { sample = null; ui.aiMsg = ''; }
+    else ui.aiMsg = e && e.code === 'rate_limited' ? 'Trop de demandes : réessayez dans un moment.' : 'L’analyse n’a pas abouti. Remplissez le formulaire à la main.';
+  }
+  ui.aiBusy = false; render(true);
+}
+async function loadPhoto(id) {
+  if (photoCache[id] !== undefined || !db) return;
+  photoCache[id] = null;
+  try { const s = await db.doc('photos/' + id).get(); if (s.exists) { photoCache[id] = s.data().data; render(); } } catch {}
+}
+
+/* Scanner */
+async function decodeQr(file) {
+  ui.scanBusy = true; ui.scanMsg = ''; render(true);
+  try {
+    if (typeof jsQR !== 'function') throw new Error('lib');
+    let found = null;
+    for (const size of [1200, 800, 1600]) {
+      const c = await compress(file, size, 1);
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+      const r = jsQR(d.data, c.width, c.height, { inversionAttempts: 'attemptBoth' });
+      if (r && r.data) { found = r.data; break; }
+    }
+    ui.scanBusy = false;
+    if (!found) { ui.scanMsg = 'Aucun QR code lisible sur la photo. Rapprochez-vous et évitez les reflets, ou saisissez le code.'; return render(true); }
+    const code = found.replace(/^VIGIE:/i, '').trim().toUpperCase();
+    return openEquip(code);
+  } catch { ui.scanBusy = false; ui.scanMsg = 'La lecture du QR code a échoué. Saisissez le code de l’équipement.'; render(true); }
+}
+function openEquip(code) {
+  if (!code) { ui.scanMsg = 'Saisissez un code.'; return render(true); }
+  const e = S.equip.find(x => x.code.toUpperCase() === code.toUpperCase());
+  ui.sheet = e ? e.code : code; ui.scanMsg = '';
+  if (e) { lastEquip = { code: e.code, nom: e.nom }; lsSet('vigie.lastEquip', lastEquip); }
+  render(true); window.scrollTo(0, 0);
+}
+
+/* Réglages : équipements */
+async function saveEquip() {
+  ['eCode:code', 'eNom:nom', 'eZone:zone', 'eProd:produit', 'eTags:tags', 'eCons:consignes', 'ePerm:permis'].forEach(p => { const [i, k] = p.split(':'); const el = $('#' + i); if (el) ui.eq[k] = el.value; });
+  const q = ui.eq, code = q.code.trim().toUpperCase();
+  if (!/^[A-Z0-9_-]{1,40}$/.test(code)) { ui.eqMsg = 'Le code accepte lettres, chiffres, tiret et souligné (40 caractères au plus).'; return render(true); }
+  if (!q.nom.trim()) { ui.eqMsg = 'Indiquez le nom de l’équipement.'; return render(true); }
+  return guard(async () => {
+    need();
+    await db.doc('equip/' + code).set({ code, nom: q.nom.trim(), zone: q.zone.trim(), produit: q.produit.trim(), tags: q.tags.split(',').map(s => s.trim()).filter(Boolean), consignes: q.consignes.split('\n').map(s => s.trim()).filter(Boolean), permis: q.permis.trim() });
+    ui.eq = { code: '', nom: '', zone: '', produit: '', tags: '', consignes: '', permis: '' }; ui.eqMsg = '✓ Équipement enregistré : ' + code; render(true);
+  }, m => ui.eqMsg = m);
+}
+async function downloadLabel(code) {
+  const e = S.equip.find(x => x.code === code); if (!e || !downloads) return;
+  try {
+    const q = qrcode(0, 'M'); q.addData('VIGIE:' + code); q.make();
+    const n = q.getModuleCount(), cell = 12, pad = 48, qs = n * cell, W = qs + pad * 2, H = qs + pad * 2 + 120;
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, W, H); g.fillStyle = '#0F1B2D';
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) g.fillRect(pad + k * cell, pad + r * cell, cell, cell);
+    g.textAlign = 'center'; g.font = '800 34px Manrope, sans-serif'; g.fillText(e.nom, W / 2, qs + pad + 56);
+    g.font = '500 22px Inter, sans-serif'; g.fillStyle = '#566578'; g.fillText('Vigie · code ' + code + ' · scannez avant d’intervenir', W / 2, qs + pad + 92);
+    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    await downloads.save({ filename: 'Etiquette-' + code + '.png', data: blob });
+  } catch {}
+}
+
+/* ---------- Démarrage (version autonome : données stockées dans le navigateur) ---------- */
+function makeLocalDB() {
+  const KEY = 'vigie.db.v1';
+  const subs = new Set();
+  const gen = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
+  const seed = () => ({
+    config: {},
+    equip: {
+      B12: { code:'B12', nom:'Bac B12', zone:'Parc de stockage', produit:'Brut léger', tags:['Zone ATEX 1','H₂S possible','Espace confiné'], consignes:['Permis de pénétrer + bon de consignation','Isolement par joints pleins sur toutes les lignes','Mesure d’atmosphère en continu (O₂, explosivité, H₂S)','Surveillant extérieur et trépied de sauvetage en place'], permis:'Permis de pénétrer + bon de consignation', exemple:true },
+      P204: { code:'P204', nom:'Pompe P-204', zone:'Unité de distillation', produit:'Naphta', tags:['Zone ATEX 2','Pression / vapeur'], consignes:['Consigner la pompe et ses vannes d’isolement','Purger et décompresser avant ouverture','Explosimétrie si travail par point chaud'], permis:'Bon de consignation + permis de travail', exemple:true },
+      CH03: { code:'CH03', nom:'Poste de chargement 3', zone:'Expéditions', produit:'Gazole', tags:['Citernes','Zone ATEX 1'], consignes:['Protocole de sécurité signé par le transporteur','Mise à la terre de la citerne avant chargement'], permis:'Protocole de sécurité chargement / déchargement', exemple:true }
+    },
+    risks: {
+      ex1:{ zone:'Bac B12 – nettoyage intérieur', danger:'confine', p:3, g:4, equip:'B12', done:false, exemple:true, at:'2026-10-29T12:00:00Z' },
+      ex2:{ zone:'Grand arrêt – coactivité de plusieurs entreprises', danger:'coact', p:3, g:3, equip:null, done:false, exemple:true, at:'2026-10-29T12:00:00Z' },
+      ex3:{ zone:'Pompe P-204 – soudure sur ligne', danger:'atex', p:2, g:4, equip:'P204', done:false, exemple:true, at:'2026-10-29T12:00:00Z' },
+      ex4:{ zone:'Désulfuration – échantillonnage', danger:'h2s', p:2, g:4, equip:null, done:false, exemple:true, at:'2026-10-29T12:00:00Z' },
+      ex5:{ zone:'Poste de chargement 3 – citernes', danger:'citerne', p:2, g:3, equip:'CH03', done:false, exemple:true, at:'2026-10-29T12:00:00Z' },
+      ex6:{ zone:'Travaux extérieurs en été', danger:'chaleur', p:3, g:2, equip:null, done:false, exemple:true, at:'2026-10-29T12:00:00Z' },
+      ex7:{ zone:'Bac B12 – accès au toit', danger:'hauteur', p:2, g:3, equip:'B12', done:false, exemple:true, at:'2026-10-29T12:00:00Z' }
+    },
+    incidents: {}, sos: {}, permits: {}, photos: {}
+  });
+  let data = load() || seed();
+  const notify = () => subs.forEach(fn => { try { fn(); } catch {} });
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { throw { code:'quota_exceeded' }; } notify(); };
+  window.addEventListener('storage', e => { if (e.key === KEY) { data = load() || data; notify(); } });
+  const col = c => (data[c] = data[c] || {});
+  const snap = (id, v) => ({ id, exists: !!v, data: () => v });
+  function docRef(c, id) {
+    return {
+      id,
+      get: async () => snap(id, col(c)[id]),
+      set: async o => { col(c)[id] = JSON.parse(JSON.stringify(o)); save(); },
+      update: async o => { if (!col(c)[id]) throw { code:'invalid_argument' }; Object.assign(col(c)[id], JSON.parse(JSON.stringify(o))); save(); },
+      delete: async () => { delete col(c)[id]; save(); },
+      onSnapshot(fn) { const run = () => fn(snap(id, col(c)[id])); subs.add(run); setTimeout(run, 0); return () => subs.delete(run); }
+    };
+  }
+  function query(c, ord, lim) {
+    return {
+      orderBy: (f, d) => query(c, { f, d }, lim),
+      limit: n => query(c, ord, n),
+      doc: id => docRef(c, id || gen()),
+      add: async o => { const r = docRef(c, gen()); await r.set(o); return r; },
+      onSnapshot(fn) {
+        const run = () => {
+          let arr = Object.entries(col(c)).map(([id, v]) => snap(id, v));
+          if (ord) arr.sort((a, b) => { const x = a.data()[ord.f] ?? '', y = b.data()[ord.f] ?? ''; return (x < y ? -1 : x > y ? 1 : 0) * (ord.d === 'desc' ? -1 : 1); });
+          if (lim) arr = arr.slice(0, lim);
+          fn({ docs: arr });
+        };
+        subs.add(run); setTimeout(run, 0); return () => subs.delete(run);
+      }
+    };
+  }
+  return { doc: p => { const [c, i] = p.split('/'); return docRef(c, i); }, collection: c => query(c) };
+}
+const localDownloads = {
+  save: async ({ filename, data }) => {
+    const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return { status: 'saved' };
+  }
+};
+
+/* ---------- Supabase : base partagée, connexion par code e-mail, temps réel ---------- */
+const CFG = window.VIGIE_CONFIG || {};
+const SUPA = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase && window.supabase.createClient);
+let sb = null;
+function SUPA_READY() { try { return !!AUTH; } catch { return false; } }
+const AUTH = { need: false, step: 'email', email: '', msg: '', busy: false, session: null, profile: null, users: null, usersLoading: false };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function makeSupaDB(client) {
+  const cache = {}, listeners = {}, loading = {};
+  const gen = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 20) : Math.random().toString(36).slice(2) + Date.now().toString(36));
+  const emit = c => (listeners[c] || new Set()).forEach(fn => { try { fn(); } catch {} });
+  const fail = e => { throw { code: (e && /row-level security|permission/i.test(e.message || '')) ? 'invalid_argument' : 'unavailable', message: e && e.message }; };
+  async function loadCol(c) {
+    const { data, error } = await client.from('docs').select('id,data').eq('collection', c).limit(5000);
+    if (error) return;
+    const m = new Map(); (data || []).forEach(r => m.set(r.id, r.data)); cache[c] = m; emit(c);
+  }
+  const ensure = c => { if (!loading[c]) loading[c] = loadCol(c); return loading[c]; };
+  client.channel('vigie-docs').on('postgres_changes', { event: '*', schema: 'public', table: 'docs' }, pl => {
+    const row = (pl.new && pl.new.collection) ? pl.new : pl.old; if (!row || !cache[row.collection]) return;
+    if (pl.eventType === 'DELETE') cache[row.collection].delete(row.id); else cache[row.collection].set(row.id, row.data);
+    emit(row.collection);
+  }).subscribe();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) Object.keys(cache).forEach(loadCol); });
+  const snap = (id, v) => ({ id, exists: !!v, data: () => v });
+  const local = (c, id, v) => { if (cache[c]) { if (v === undefined) cache[c].delete(id); else cache[c].set(id, v); emit(c); } };
+  function docRef(c, id) {
+    return {
+      id,
+      async get() { const { data, error } = await client.from('docs').select('data').eq('collection', c).eq('id', id).maybeSingle(); if (error) fail(error); return snap(id, data ? data.data : undefined); },
+      async set(o) { const v = JSON.parse(JSON.stringify(o)); const { error } = await client.from('docs').upsert({ collection: c, id, data: v, updated_at: new Date().toISOString() }); if (error) fail(error); local(c, id, v); },
+      async update(o) {
+        let cur = cache[c] && cache[c].get(id);
+        if (!cur) { const s = await this.get(); if (!s.exists) throw { code: 'invalid_argument' }; cur = s.data(); }
+        const v = Object.assign({}, cur, JSON.parse(JSON.stringify(o)));
+        const { error } = await client.from('docs').update({ data: v, updated_at: new Date().toISOString() }).eq('collection', c).eq('id', id); if (error) fail(error); local(c, id, v);
+      },
+      async delete() { const { error } = await client.from('docs').delete().eq('collection', c).eq('id', id); if (error) fail(error); local(c, id, undefined); },
+      onSnapshot(fn) { const run = () => fn(snap(id, cache[c] && cache[c].get(id))); (listeners[c] = listeners[c] || new Set()).add(run); ensure(c).then(run); return () => listeners[c].delete(run); }
+    };
+  }
+  function query(c, ord, lim) {
+    return {
+      orderBy: (f, d) => query(c, { f, d }, lim),
+      limit: n => query(c, ord, n),
+      doc: id => docRef(c, id || gen()),
+      async add(o) { const r = docRef(c, gen()); await r.set(o); return r; },
+      onSnapshot(fn) {
+        const run = () => {
+          let arr = [...(cache[c] || new Map()).entries()].map(([id, v]) => snap(id, v));
+          if (ord) arr.sort((a, b) => { const x = a.data()[ord.f] ?? '', y = b.data()[ord.f] ?? ''; return (x < y ? -1 : x > y ? 1 : 0) * (ord.d === 'desc' ? -1 : 1); });
+          if (lim) arr = arr.slice(0, lim);
+          fn({ docs: arr });
+        };
+        (listeners[c] = listeners[c] || new Set()).add(run); ensure(c).then(run); return () => listeners[c].delete(run);
+      }
+    };
+  }
+  return { doc: p => { const [c, i] = p.split('/'); return docRef(c, i); }, collection: c => query(c) };
+}
+function makeSupaUser(client) {
+  const names = {};
+  return {
+    async profiles(ids) {
+      ids = [].concat(ids);
+      const need = ids.filter(i => UUID.test(i) && !(i in names));
+      if (need.length) { const { data } = await client.from('profiles').select('id,nom').in('id', need); (data || []).forEach(p => { names[p.id] = p.nom || ''; }); need.forEach(i => { if (!(i in names)) names[i] = ''; }); }
+      return Object.fromEntries(ids.map(i => [i, { id: i, name: names[i] || '' }]));
+    }
+  };
+}
+
+/* Alerte quand un collègue déclenche un SOS */
+let seenSos = null;
+function notifySos(x) {
+  const t = SOS_T.find(k => k.id === x.type) || SOS_T[4];
+  try { navigator.vibrate && navigator.vibrate([400, 150, 400, 150, 400]); } catch {}
+  try { const ac = new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), g = ac.createGain(); o.type = 'square'; o.frequency.value = 880; o.connect(g); g.connect(ac.destination); g.gain.value = 0.08; o.start(); setTimeout(() => { o.stop(); ac.close(); }, 900); } catch {}
+  if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
+    navigator.serviceWorker.ready.then(r => r.showNotification('Alerte SOS : ' + t.label, { body: (x.equipName || x.lieu || 'Position non précisée') + ' · ouvrez Vigie', tag: 'sos-' + x.id, requireInteraction: true, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { url: './index.html' } })).catch(() => {});
+  }
+}
+
+let started = false;
+function startApp() {
+  if (started) return; started = true;
+  const docs = s => s.docs.map(x => Object.assign({ id: x.id }, x.data()));
+  db.doc('config/site').onSnapshot(s => { S.cfg = s.exists ? s.data() : {}; render(); });
+  db.collection('risks').onSnapshot(s => { S.risks = docs(s); render(); });
+  db.collection('incidents').orderBy('at', 'desc').limit(200).onSnapshot(s => { S.incidents = docs(s); render(); });
+  db.collection('sos').orderBy('at', 'desc').limit(30).onSnapshot(s => {
+    S.sos = docs(s);
+    const recent = Date.now() - 3600e3;
+    if (seenSos) S.sos.filter(x => x.status === 'active' && !seenSos.has(x.id) && x.by !== S.me.id && new Date(x.at).getTime() > recent).forEach(notifySos);
+    seenSos = new Set(S.sos.map(x => x.id));
+    render();
+  });
+  db.collection('permits').orderBy('at', 'desc').limit(100).onSnapshot(s => { S.permits = docs(s); render(); });
+  db.collection('stops').orderBy('at', 'desc').limit(100).onSnapshot(s => { S.stops = docs(s); render(); });
+  db.collection('formation').onSnapshot(s => { S.formation = docs(s); render(); });
+  db.collection('equip').onSnapshot(s => { S.equip = docs(s).sort((a, b) => String(a.code).localeCompare(String(b.code))); render(); });
+  render(true);
+}
+
+async function afterLogin(session) {
+  if (!session) { AUTH.need = true; AUTH.step = 'email'; return render(true); }
+  AUTH.session = session; AUTH.busy = false;
+  const uid = session.user.id;
+  const { data: prof, error } = await sb.from('profiles').select('id,nom,email,role,active').eq('id', uid).maybeSingle();
+  if (error) { AUTH.need = true; AUTH.step = 'pending'; AUTH.msg = 'Connexion à la base impossible. Vérifiez le réseau, puis réessayez.'; return render(true); }
+  AUTH.profile = prof;
+  if (!prof || !prof.nom) { AUTH.need = true; AUTH.step = 'name'; return render(true); }
+  if (!prof.active) { AUTH.need = true; AUTH.step = 'pending'; return render(true); }
+  AUTH.need = false;
+  db = makeSupaDB(sb); user = makeSupaUser(sb); assets = null; sample = null; downloads = localDownloads;
+  S.me = { id: uid, name: prof.nom }; S.canEdit = prof.role === 'hse'; S.dbState = 'ready';
+  startApp();
+}
+async function authSend() {
+  const email = (($('#authEmail') || {}).value || AUTH.email).trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { AUTH.msg = 'Adresse e-mail invalide.'; return render(true); }
+  AUTH.email = email; AUTH.busy = true; AUTH.msg = ''; render(true);
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  AUTH.busy = false;
+  if (error) { AUTH.msg = /rate|limit|seconds/i.test(error.message) ? 'Trop de demandes : patientez une minute avant de redemander un code.' : 'Envoi du code impossible : ' + error.message; return render(true); }
+  AUTH.step = 'code'; AUTH.msg = 'Code envoyé. Regardez votre boîte mail (et les indésirables).'; render(true);
+}
+async function authVerify() {
+  const token = (($('#authCode') || {}).value || '').replace(/\s/g, '');
+  if (!/^\d{6,10}$/.test(token)) { AUTH.msg = 'Saisissez le code à chiffres reçu par e-mail.'; return render(true); }
+  AUTH.busy = true; AUTH.msg = ''; render(true);
+  const { data, error } = await sb.auth.verifyOtp({ email: AUTH.email, token, type: 'email' });
+  AUTH.busy = false;
+  if (error || !data.session) { AUTH.msg = 'Code incorrect ou expiré. Demandez un nouveau code.'; return render(true); }
+  afterLogin(data.session);
+}
+async function authName() {
+  const nom = (($('#authNom') || {}).value || '').trim();
+  if (nom.length < 2) { AUTH.msg = 'Indiquez votre prénom et votre nom.'; return render(true); }
+  AUTH.busy = true; render(true);
+  const uid = AUTH.session.user.id;
+  const { data, error } = await sb.from('profiles').update({ nom }).eq('id', uid).select('id');
+  if (error || !data || !data.length) { AUTH.busy = false; AUTH.msg = 'Enregistrement du nom impossible. Le script de base de données a-t-il bien été exécuté ?'; return render(true); }
+  afterLogin(AUTH.session);
+}
+async function loadUsers() {
+  if (AUTH.usersLoading) return; AUTH.usersLoading = true;
+  const { data } = await sb.from('profiles').select('id,nom,email,role,active,created_at').order('created_at', { ascending: true });
+  AUTH.users = data || []; AUTH.usersLoading = false; render();
+}
+async function setMember(id, active, role) {
+  const { error } = await sb.rpc('set_member', { target: id, p_active: active, p_role: role });
+  if (error) { AUTH.msg = 'Modification refusée : ' + error.message; }
+  AUTH.users = null; loadUsers();
+}
+function fBadge(uid) { const f = S.formation.find(x => x.id === uid); return f ? `<span class="tiny" style="color:var(--ok-ink)">Formation droit d’arrêt validée le ${esc(dmy(f.at))}</span>` : '<span class="tiny muted">Formation droit d’arrêt à faire</span>'; }
+function accountSection() {
+  if (!SUPA || !AUTH.profile) return '';
+  const p = AUTH.profile;
+  let h = `<div class="card stack-s"><h2>Mon compte</h2><span class="small">${esc(p.nom)} · ${esc(p.email || (AUTH.session && AUTH.session.user.email) || '')}</span><span class="tiny muted">Rôle : ${p.role === 'hse' ? 'service HSE' : 'opérateur'}</span><button class="btn" data-act="logout">Se déconnecter</button></div>`;
+  if (S.canEdit) {
+    if (AUTH.users === null) setTimeout(loadUsers, 0);
+    const us = AUTH.users || [];
+    const pend = us.filter(u => !u.active);
+    h += `<div class="stack-s"><h2>Utilisateurs</h2><span class="small muted">Validez chaque nouveau compte avant qu’il voie les données du site.</span>${AUTH.msg ? `<div class="note err small">${esc(AUTH.msg)}</div>` : ''}
+      <div class="card flush list">${AUTH.users === null ? '<div class="empty">Chargement…</div>' : us.map(u => `<div class="row" style="flex-wrap:wrap"><span class="grow"><strong>${esc(u.nom || 'Sans nom')}</strong><span class="tiny muted">${esc(u.email || '')}</span>${fBadge(u.id)}</span>
+        <span class="badge ${u.active ? (u.role === 'hse' ? 'lv-info' : 'lv-low') : 'lv-high'}">${u.active ? (u.role === 'hse' ? 'HSE' : 'Opérateur') : 'En attente'}</span>
+        ${u.id === S.me.id ? '' : `<span class="chips" style="width:100%">${u.active ? `<button class="btn sm" data-act="member" data-id="${esc(u.id)}" data-active="0" data-role="${esc(u.role)}">Désactiver</button><button class="btn sm" data-act="member" data-id="${esc(u.id)}" data-active="1" data-role="${u.role === 'hse' ? 'operateur' : 'hse'}">${u.role === 'hse' ? 'Passer opérateur' : 'Passer HSE'}</button>` : `<button class="btn sm ok" data-act="member" data-id="${esc(u.id)}" data-active="1" data-role="operateur">Valider</button>`}</span>`}</div>`).join('')}</div>
+      ${pend.length ? `<span class="tiny muted">${pend.length} compte(s) en attente.</span>` : ''}</div>`;
+  }
+  return h;
+}
+function authView() {
+  const A = AUTH;
+  const msg = A.msg ? `<div class="note ${/impossible|incorrect|invalide|refus|Trop/.test(A.msg) ? 'err' : 'info'} small" role="status">${esc(A.msg)}</div>` : '';
+  let body = '';
+  if (A.step === 'email') body = `<div class="field"><label for="authEmail">Adresse e-mail</label><input class="input" id="authEmail" type="email" autocomplete="email" inputmode="email" value="${esc(A.email)}" placeholder="prenom.nom@entreprise.fr"></div>${msg}<button class="btn primary block" data-act="auth-send" ${A.busy ? 'disabled' : ''}>${A.busy ? 'Envoi…' : 'Recevoir mon code de connexion'}</button>`;
+  else if (A.step === 'code') body = `<span class="small">Code envoyé à <strong>${esc(A.email)}</strong></span><div class="field"><label for="authCode">Code reçu par e-mail</label><input class="input" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" style="font-size:22px;letter-spacing:.2em;font-variant-numeric:tabular-nums"></div>${msg}<button class="btn primary block" data-act="auth-verify" ${A.busy ? 'disabled' : ''}>${A.busy ? 'Vérification…' : 'Se connecter'}</button><div class="chips"><button class="btn ghost sm" data-act="auth-send">Renvoyer un code</button><button class="btn ghost sm" data-act="auth-back">Changer d’adresse</button></div>`;
+  else if (A.step === 'name') body = `<span class="small">Première connexion : comment vous appelez-vous ? Votre nom apparaît sur vos déclarations et vos alertes.</span><div class="field"><label for="authNom">Prénom et nom</label><input class="input" id="authNom" autocomplete="name" placeholder="Ex. : Karim Benali"></div>${msg}<button class="btn primary block" data-act="auth-name" ${A.busy ? 'disabled' : ''}>Continuer</button>`;
+  else body = `<div class="note warn">Votre compte est en attente de validation par le service HSE. Prévenez votre responsable sécurité, puis réessayez.</div>${msg}<button class="btn primary block" data-act="auth-refresh">J’ai été validé, réessayer</button><button class="btn ghost" data-act="logout">Se déconnecter</button>`;
+  return `<div class="stack-s" style="padding-top:12px"><h1>Connexion à Vigie</h1><span class="small muted">Accès réservé au personnel du site et aux entreprises intervenantes.</span></div>
+   <div class="card stack">${body}</div>
+   <div class="stack-s"><h2>Urgence ?</h2><span class="small muted">Pas besoin de vous connecter pour appeler.</span>${numbersCard()}</div>`;
+}
+
+(async () => {
+  if (!SUPA) {
+    db = makeLocalDB(); user = null; assets = null; sample = null; downloads = localDownloads;
+    S.me = { id: 'local' }; S.canEdit = true; S.dbState = 'ready';
+    return startApp();
+  }
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+  AUTH.need = true; AUTH.step = 'email'; render(true);
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) await afterLogin(data.session); else render(true);
+})();
+})();
+</script>
+
+</body>
+</html>

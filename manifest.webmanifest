@@ -1,0 +1,24 @@
+{
+  "name": "Vigie – Prévention des accidents",
+  "short_name": "Vigie",
+  "description": "SOS, déclarations avec photo, QR des équipements, check-lists permis et registre des risques.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F6FA",
+  "theme_color": "#1A4FE0",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "J'arrête le travail (STOP)", "url": "./index.html#stop", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Alerte SOS", "url": "./index.html#sos", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Déclarer un événement", "url": "./index.html#declarer", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Scanner un équipement", "url": "./index.html#scanner", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
