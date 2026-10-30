@@ -1115,7 +1115,7 @@ async function authSend() {
   const email = (($('#authEmail') || {}).value || AUTH.email).trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { AUTH.msg = 'Adresse e-mail invalide.'; return render(true); }
   AUTH.email = email; AUTH.busy = true; AUTH.msg = ''; render(true);
-  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
   AUTH.busy = false;
   if (error) { AUTH.msg = /rate|limit|seconds/i.test(error.message) ? 'Trop de demandes : patientez une minute avant de redemander un code.' : 'Envoi du code impossible : ' + error.message; return render(true); }
   AUTH.step = 'code'; AUTH.msg = 'Code envoyé. Regardez votre boîte mail (et les indésirables).'; render(true);
@@ -1184,7 +1184,8 @@ function authView() {
     S.me = { id: 'local' }; S.canEdit = true; S.dbState = 'ready';
     return startApp();
   }
-  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  if (/error_description|error_code/.test(location.hash)) { AUTH.msg = 'Ce lien de connexion a expiré ou a déjà servi. Demandez un nouveau code ci-dessous.'; try { history.replaceState(null, '', location.pathname); } catch {} }
   AUTH.need = true; AUTH.step = 'email'; render(true);
   const { data } = await sb.auth.getSession();
   if (data && data.session) await afterLogin(data.session); else render(true);
