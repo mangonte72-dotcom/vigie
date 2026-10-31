@@ -10,4 +10,4 @@ formation « Droit d'arrêt de travail » avec quiz, registre des risques.
 
 Réalisé par Tamis AI.
 
-Dernière publication : 2026-10-30T11:37Z
+Dernière publication : 2026-10-31T08:46Z

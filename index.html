@@ -409,11 +409,11 @@ const VIEWS = {
  sos() {
   const mine = ui.mySos && S.sos.find(s => s.id === ui.mySos && (s.status === 'active' || s.status === 'prise'));
   const t = SOS_T.find(x => x.id === (mine ? mine.type : ui.sosType)) || SOS_T[0];
-  const poste = S.cfg.poste || '[NUMÉRO INTERNE]';
+  const poste = S.cfg.poste || (window.VIGIE_CONFIG || {}).posteGarde || '[NUMÉRO INTERNE]';
   if (mine) return `${backLink('#accueil', 'Alerte SOS')}
    <div class="alert"><span class="tiny" style="font-weight:700;letter-spacing:.06em">${mine.status === 'prise' ? 'PRISE EN CHARGE' : 'ALERTE ENVOYÉE'} · ${esc(hhmm(mine.at))}</span>
     <strong style="font-family:var(--display);font-size:22px">${mine.status === 'prise' ? 'Les secours du site arrivent' : 'Toute l’équipe est prévenue'}</strong>
-    <span class="small">${esc(t.label)}${mine.equipName ? ' · ' + esc(mine.equipName) : ''}. Appelez aussi le poste de garde : ${esc(poste)}.</span></div>
+    <span class="small">${esc(t.label)}${mine.equipName ? ' · ' + esc(mine.equipName) : ''}. Appelez aussi le poste de garde : ${/\d/.test(poste) ? `<a href="tel:${esc(poste.replace(/\s/g, ''))}" style="color:inherit;font-weight:700">${esc(poste)}</a>` : esc(poste)}.</span></div>
    <div class="card stack-s"><h2>En attendant les secours</h2><ol>${t.r.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>
    ${numbersCard()}
    <button class="btn block" data-act="sos-close" data-id="${esc(mine.id)}">Annuler l’alerte (fausse alerte ou situation réglée)</button>`;
