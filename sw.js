@@ -1,6 +1,6 @@
 /* Vigie – service worker : ouverture hors ligne, mises à jour, notifications SOS.
    Changez VERSION à chaque mise à jour des fichiers pour que les téléphones la récupèrent. */
-const VERSION = 'vigie-v6';
+const VERSION = 'vigie-v7';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './vendor/jsQR.js', './vendor/qrcode.js', './vendor/supabase.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
   ...Array.from({ length: 10 }, (_, i) => './slides/slide-' + String(i + 1).padStart(2, '0') + '.jpg')];

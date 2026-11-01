@@ -732,6 +732,8 @@ document.addEventListener('click', async e => {
     case 'eq-edit': { const q = S.equip.find(x => x.code === v); if (q) ui.eq = { _edit: true, code: q.code, nom: q.nom || '', zone: q.zone || '', produit: q.produit || '', tags: (q.tags || []).join(', '), consignes: (q.consignes || []).join('\n'), permis: q.permis || '' }; ui.eqMsg = ''; render(true); window.scrollTo(0, 0); return; }
     case 'eq-del': if (ui.confirmDel !== v) { ui.confirmDel = v; return render(true); } ui.confirmDel = null; return guard(async () => { need(); await db.doc('equip/' + v).delete(); });
     case 'eq-dl': return downloadLabel(v);
+    case 'auth-pass': return authPass();
+    case 'pw-save': return setPassword();
     case 'auth-send': return authSend();
     case 'auth-verify': return authVerify();
     case 'auth-back': AUTH.step = 'email'; AUTH.msg = ''; return render(true);
@@ -785,7 +787,7 @@ function holdEnd() { if (holdT) { clearTimeout(holdT); holdT = null; } const b =
 document.addEventListener('pointerdown', holdStart);
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => document.addEventListener(t, ev => { if (!ev.target.closest || ev.target.closest('#holdBtn') || t !== 'pointerleave') holdEnd(); }, true));
 document.addEventListener('keydown', ev => { if ((ev.key === ' ' || ev.key === 'Enter') && !ev.repeat && document.activeElement && document.activeElement.id === 'holdBtn') holdStart(ev); });
-document.addEventListener('keydown', ev => { if (ev.key !== 'Enter' || !AUTH.need) return; const id = document.activeElement && document.activeElement.id; const m = { authEmail: 'auth-send', authCode: 'auth-verify', authNom: 'auth-name' }[id]; if (m) { ev.preventDefault(); const b = document.querySelector('[data-act="' + m + '"]'); if (b) b.click(); } });
+document.addEventListener('keydown', ev => { if (ev.key !== 'Enter' || !AUTH.need) return; const id = document.activeElement && document.activeElement.id; const m = { authEmail: 'auth-pass', authPass: 'auth-pass', authCode: 'auth-verify', authNom: 'auth-name' }[id]; if (m) { ev.preventDefault(); const b = document.querySelector('[data-act="' + m + '"]'); if (b) b.click(); } });
 document.addEventListener('keyup', ev => { if (ev.key === ' ' || ev.key === 'Enter') holdEnd(); });
 document.addEventListener('contextmenu', ev => { if (ev.target.closest && ev.target.closest('#holdBtn')) ev.preventDefault(); });
 
@@ -997,7 +999,7 @@ const CFG = window.VIGIE_CONFIG || {};
 const SUPA = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase && window.supabase.createClient);
 let sb = null;
 function SUPA_READY() { try { return !!AUTH; } catch { return false; } }
-const AUTH = { need: false, step: 'email', email: '', msg: '', busy: false, session: null, profile: null, users: null, usersLoading: false };
+const AUTH = { need: false, step: 'email', email: '', msg: '', busy: false, pwMsg: '', pwOk: false, pwBusy: false, session: null, profile: null, users: null, usersLoading: false };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function makeSupaDB(client) {
@@ -1120,6 +1122,29 @@ async function authSend() {
   if (error) { AUTH.msg = /rate|limit|seconds/i.test(error.message) ? 'Limite d’envoi atteinte : le service d’e-mails n’envoie que 2 messages par heure. Utilisez le dernier e-mail reçu (lien ou code), ou réessayez dans une heure.' : 'Envoi du code impossible : ' + error.message; return render(true); }
   AUTH.step = 'code'; AUTH.msg = 'Code envoyé. Regardez votre boîte mail (et les indésirables).'; render(true);
 }
+async function authPass() {
+  const email = (($('#authEmail') || {}).value || AUTH.email).trim().toLowerCase();
+  const password = ($('#authPass') || {}).value || '';
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { AUTH.msg = 'Adresse e-mail invalide.'; return render(true); }
+  AUTH.email = email;
+  if (!password) { AUTH.msg = 'Saisissez votre mot de passe, ou recevez un code par e-mail.'; return render(true); }
+  AUTH.busy = true; AUTH.msg = ''; render(true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  AUTH.busy = false;
+  if (error || !data || !data.session) { AUTH.msg = /confirm/i.test((error && error.message) || '') ? 'Adresse e-mail non confirmée : connectez-vous une première fois avec un code reçu par e-mail.' : 'E-mail ou mot de passe incorrect. Pas encore de mot de passe ? Recevez un code par e-mail, puis créez-le dans Réglages.'; return render(true); }
+  afterLogin(data.session);
+}
+async function setPassword() {
+  const a = ($('#newPass') || {}).value || '', b = ($('#newPass2') || {}).value || '';
+  AUTH.pwOk = false;
+  if (a.length < 8) { AUTH.pwMsg = 'Mot de passe trop court : 8 caractères minimum.'; return render(true); }
+  if (a !== b) { AUTH.pwMsg = 'Les deux mots de passe ne sont pas identiques.'; return render(true); }
+  AUTH.pwBusy = true; AUTH.pwMsg = ''; render(true);
+  const { error } = await sb.auth.updateUser({ password: a });
+  AUTH.pwBusy = false; AUTH.pwOk = !error;
+  AUTH.pwMsg = error ? 'Enregistrement impossible : ' + error.message : 'Mot de passe enregistré. Sur votre téléphone, connectez-vous avec votre e-mail et ce mot de passe.';
+  render(true);
+}
 async function authVerify() {
   const token = (($('#authCode') || {}).value || '').replace(/\s/g, '');
   if (!/^\d{6,10}$/.test(token)) { AUTH.msg = 'Saisissez le code à chiffres reçu par e-mail.'; return render(true); }
@@ -1153,7 +1178,8 @@ function fBadge(uid) { const f = S.formation.find(x => x.id === uid); return f ?
 function accountSection() {
   if (!SUPA || !AUTH.profile) return '';
   const p = AUTH.profile;
-  let h = `<div class="card stack-s"><h2>Mon compte</h2><span class="small">${esc(p.nom)} · ${esc(p.email || (AUTH.session && AUTH.session.user.email) || '')}</span><span class="tiny muted">Rôle : ${p.role === 'hse' ? 'service HSE' : 'opérateur'}</span><button class="btn" data-act="logout">Se déconnecter</button></div>`;
+  let h = `<div class="card stack-s"><h2>Mon compte</h2><span class="small">${esc(p.nom)} · ${esc(p.email || (AUTH.session && AUTH.session.user.email) || '')}</span><span class="tiny muted">Rôle : ${p.role === 'hse' ? 'service HSE' : 'opérateur'}</span><button class="btn" data-act="logout">Se déconnecter</button></div>
+    <div class="card stack-s"><h2>Mot de passe</h2><span class="small muted">Pour vous connecter sur votre téléphone ou un autre appareil sans attendre de code par e-mail.</span><div class="field"><label for="newPass">Nouveau mot de passe</label><input class="input" id="newPass" type="password" autocomplete="new-password" placeholder="8 caractères minimum"></div><div class="field"><label for="newPass2">Confirmer le mot de passe</label><input class="input" id="newPass2" type="password" autocomplete="new-password"></div>${AUTH.pwMsg ? `<div class="note ${AUTH.pwOk ? 'info' : 'err'} small" role="status">${AUTH.pwOk ? '✓ ' : ''}${esc(AUTH.pwMsg)}</div>` : ''}<button class="btn primary" data-act="pw-save" ${AUTH.pwBusy ? 'disabled' : ''}>${AUTH.pwBusy ? 'Enregistrement…' : 'Enregistrer le mot de passe'}</button></div>`;
   if (S.canEdit) {
     if (AUTH.users === null) setTimeout(loadUsers, 0);
     const us = AUTH.users || [];
@@ -1168,9 +1194,9 @@ function accountSection() {
 }
 function authView() {
   const A = AUTH;
-  const msg = A.msg ? `<div class="note ${/impossible|incorrect|invalide|refus|Trop/.test(A.msg) ? 'err' : 'info'} small" role="status">${esc(A.msg)}</div>` : '';
+  const msg = A.msg ? `<div class="note ${/impossible|incorrect|invalide|refus|Trop|non confirmée|Saisissez/.test(A.msg) ? 'err' : 'info'} small" role="status">${esc(A.msg)}</div>` : '';
   let body = '';
-  if (A.step === 'email') body = `<div class="field"><label for="authEmail">Adresse e-mail</label><input class="input" id="authEmail" type="email" autocomplete="email" inputmode="email" value="${esc(A.email)}" placeholder="prenom.nom@entreprise.fr"></div>${msg}<button class="btn primary block" data-act="auth-send" ${A.busy ? 'disabled' : ''}>${A.busy ? 'Envoi…' : 'Recevoir mon code de connexion'}</button>`;
+  if (A.step === 'email') body = `<div class="field"><label for="authEmail">Adresse e-mail</label><input class="input" id="authEmail" type="email" autocomplete="username" inputmode="email" value="${esc(A.email)}" placeholder="prenom.nom@entreprise.fr"></div><div class="field"><label for="authPass">Mot de passe</label><input class="input" id="authPass" type="password" autocomplete="current-password" placeholder="Votre mot de passe"></div>${msg}<button class="btn primary block" data-act="auth-pass" ${A.busy ? 'disabled' : ''}>${A.busy ? 'Connexion…' : 'Se connecter'}</button><hr style="border:none;border-top:1px solid currentColor;opacity:.15;margin:4px 0"><span class="small muted">Première connexion ou mot de passe oublié ? Recevez un code à usage unique par e-mail.</span><button class="btn block" data-act="auth-send" ${A.busy ? 'disabled' : ''}>Recevoir un code par e-mail</button>`;
   else if (A.step === 'code') body = `<span class="small">Code envoyé à <strong>${esc(A.email)}</strong></span><div class="field"><label for="authCode">Code reçu par e-mail</label><input class="input" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" style="font-size:22px;letter-spacing:.2em;font-variant-numeric:tabular-nums"></div>${msg}<button class="btn primary block" data-act="auth-verify" ${A.busy ? 'disabled' : ''}>${A.busy ? 'Vérification…' : 'Se connecter'}</button><div class="chips"><button class="btn ghost sm" data-act="auth-send">Renvoyer un code</button><button class="btn ghost sm" data-act="auth-back">Changer d’adresse</button></div>`;
   else if (A.step === 'name') body = `<span class="small">Première connexion : comment vous appelez-vous ? Votre nom apparaît sur vos déclarations et vos alertes.</span><div class="field"><label for="authNom">Prénom et nom</label><input class="input" id="authNom" autocomplete="name" placeholder="Ex. : Karim Benali"></div>${msg}<button class="btn primary block" data-act="auth-name" ${A.busy ? 'disabled' : ''}>Continuer</button>`;
   else body = `<div class="note warn">Votre compte est en attente de validation par le service HSE. Prévenez votre responsable sécurité, puis réessayez.</div>${msg}<button class="btn primary block" data-act="auth-refresh">J’ai été validé, réessayer</button><button class="btn ghost" data-act="logout">Se déconnecter</button>`;
