@@ -687,14 +687,14 @@ function setPhoto(f) { if (ui.photoUrl) URL.revokeObjectURL(ui.photoUrl); ui.pho
 function persistDraft() { const l = $('#lieu'); if (l) ui.decl.lieu = l.value; }
 
 const need = () => { if (!db) { throw new Error('offline'); } };
-async function guard(fn, onErr) { try { await fn(); } catch (e) { onErr && onErr(e && e.code === 'quota_exceeded' ? 'La base est pleine : supprimez d’anciens éléments.' : (e && e.message === 'offline' ? 'Données partagées indisponibles sur cet affichage.' : 'L’enregistrement a échoué. Réessayez dans un instant.')); render(true); } }
+async function guard(fn, onErr) { try { await fn(); } catch (e) { const code = e && e.code; onErr && onErr(code === 'quota_exceeded' ? 'La base est pleine : supprimez d’anciens éléments.' : code === 'conflict' ? 'Un collègue vient de modifier cet élément : vérifiez son état avant d’agir.' : code === 'invalid_argument' ? 'Modification non autorisée pour votre compte.' : (e && e.message === 'offline' ? 'Données partagées indisponibles sur cet affichage.' : 'L’enregistrement a échoué. Réessayez dans un instant.')); render(true); } }
 
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const a = el.dataset.act, v = el.dataset.v, id = el.dataset.id;
   switch (a) {
     case 'sos-type': ui.sosType = v; return render(true);
-    case 'sos-take': return guard(async () => { need(); await db.doc('sos/' + id).update({ status: 'prise', takenBy: S.me.id, takenAt: new Date().toISOString() }); });
+    case 'sos-take': return guard(async () => { need(); await db.doc('sos/' + id).update({ status: 'prise', takenBy: S.me.id, takenAt: new Date().toISOString() }, { expect: { status: 'active' } }); });
     case 'sos-close': return guard(async () => { need(); await db.doc('sos/' + id).update({ status: 'close', closedBy: S.me.id, closedAt: new Date().toISOString() }); if (ui.mySos === id) ui.mySos = null; render(true); });
     case 'decl': persistDraft(); ui.decl[el.dataset.k] = el.dataset.k === 'niv' ? +v : v; return render(true);
     case 'decl-ind': persistDraft(); ui.decl.ind = !ui.decl.ind; return render(true);
@@ -707,7 +707,7 @@ document.addEventListener('click', async e => {
     case 'inc-status': return guard(async () => { need(); await db.doc('incidents/' + id).update({ status: v, statusBy: S.me.id, statusAt: new Date().toISOString() }); });
     case 'risk-filter': ui.riskFilter = v; return render(true);
     case 'risk-open': ui.openRisk = ui.openRisk === id ? null : id; return render(true);
-    case 'risk-done': { const r = S.risks.find(x => x.id === id); return guard(async () => { need(); await db.doc('risks/' + id).update({ done: !(r && r.done), doneBy: S.me.id, doneAt: new Date().toISOString() }); }); }
+    case 'risk-done': { const r = S.risks.find(x => x.id === id); return guard(async () => { need(); await db.doc('risks/' + id).update({ done: !(r && r.done), doneBy: S.me.id, doneAt: new Date().toISOString() }, { expect: { done: !!(r && r.done) } }); }); }
     case 'eval-toggle': ui.evalOpen = !ui.evalOpen; return render(true);
     case 'ev': ui.ev[el.dataset.k] = el.dataset.k === 'danger' ? v : +v; return render(true);
     case 'eval-add': { const z = ($('#evZone') || {}).value || ui.ev.zone; return guard(async () => { need(); await db.collection('risks').add({ zone: z.trim() || 'Opération non précisée', danger: ui.ev.danger, p: ui.ev.p, g: ui.ev.g, equip: ui.ev.equip || null, done: false, by: S.me.id, at: new Date().toISOString() }); ui.ev = { zone: '', danger: 'atex', p: 2, g: 2, equip: '' }; ui.evalOpen = false; ui.riskFilter = 'all'; render(true); }); }
@@ -771,8 +771,8 @@ document.addEventListener('click', async e => {
     case 'stop-next': {
       const s = S.stops.find(x => x.id === id); if (!s) return;
       const inp = document.getElementById('sn-' + id), note = ((inp && inp.value) || ui.stopNotes[id] || '').trim(), next = (s.step || 1) + 1;
-      const log = (s.log || []).concat([{ step: next, by: S.me.id, at: new Date().toISOString(), note }]);
-      await guard(async () => { need(); await db.doc('stops/' + id).update({ step: next, log, status: next >= 6 ? 'clos' : 'arrete' }); delete ui.stopNotes[id]; ui.stopMsg = next === 5 ? 'Reprise du travail enregistrée.' : next === 6 ? 'Arrêt clos : merci pour le suivi.' : ''; }, m => { ui.stopErr = m; });
+      const entry = { step: next, by: S.me.id, at: new Date().toISOString(), note };
+      await guard(async () => { need(); await db.doc('stops/' + id).update({ step: next, status: next >= 6 ? 'clos' : 'arrete' }, { append: { log: entry }, expect: s.step ? { step: s.step } : null }); delete ui.stopNotes[id]; ui.stopMsg = next === 5 ? 'Reprise du travail enregistrée.' : next === 6 ? 'Arrêt clos : merci pour le suivi.' : ''; }, m => { ui.stopErr = m; });
       return render(true);
     }
     case 'stop-log': ui.stopLog = ui.stopLog === id ? null : id; return render(true);
@@ -961,7 +961,13 @@ function makeLocalDB() {
       id,
       get: async () => snap(id, col(c)[id]),
       set: async o => { col(c)[id] = JSON.parse(JSON.stringify(o)); save(); },
-      update: async o => { if (!col(c)[id]) throw { code:'invalid_argument' }; Object.assign(col(c)[id], JSON.parse(JSON.stringify(o))); save(); },
+      update: async (o, { append = null, expect = null } = {}) => {
+        const cur = col(c)[id]; if (!cur) throw { code:'invalid_argument' };
+        if (expect && Object.keys(expect).some(k => JSON.stringify(cur[k]) !== JSON.stringify(expect[k]))) throw { code:'conflict' };
+        Object.assign(cur, JSON.parse(JSON.stringify(o)));
+        Object.entries(append || {}).forEach(([k, v]) => { cur[k] = (Array.isArray(cur[k]) ? cur[k] : []).concat([v]); });
+        save();
+      },
       delete: async () => { delete col(c)[id]; save(); },
       onSnapshot(fn) { const run = () => fn(snap(id, col(c)[id])); subs.add(run); setTimeout(run, 0); return () => subs.delete(run); }
     };
@@ -1006,7 +1012,7 @@ function makeSupaDB(client) {
   const cache = {}, listeners = {}, loading = {};
   const gen = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '').slice(0, 20) : Math.random().toString(36).slice(2) + Date.now().toString(36));
   const emit = c => (listeners[c] || new Set()).forEach(fn => { try { fn(); } catch {} });
-  const fail = e => { throw { code: (e && /row-level security|permission/i.test(e.message || '')) ? 'invalid_argument' : 'unavailable', message: e && e.message }; };
+  const fail = e => { const m = (e && e.message) || ''; throw { code: /conflit/i.test(m) ? 'conflict' : (/row-level security|permission|réservé|non modifiable|non autorisé|uniquement/i.test(m) || (e && e.code === '42501')) ? 'invalid_argument' : 'unavailable', message: m }; };
   async function loadCol(c) {
     const { data, error } = await client.from('docs').select('id,data').eq('collection', c).limit(5000);
     if (error) return;
@@ -1026,11 +1032,10 @@ function makeSupaDB(client) {
       id,
       async get() { const { data, error } = await client.from('docs').select('data').eq('collection', c).eq('id', id).maybeSingle(); if (error) fail(error); return snap(id, data ? data.data : undefined); },
       async set(o) { const v = JSON.parse(JSON.stringify(o)); const { error } = await client.from('docs').upsert({ collection: c, id, data: v, updated_at: new Date().toISOString() }); if (error) fail(error); local(c, id, v); },
-      async update(o) {
-        let cur = cache[c] && cache[c].get(id);
-        if (!cur) { const s = await this.get(); if (!s.exists) throw { code: 'invalid_argument' }; cur = s.data(); }
-        const v = Object.assign({}, cur, JSON.parse(JSON.stringify(o)));
-        const { error } = await client.from('docs').update({ data: v, updated_at: new Date().toISOString() }).eq('collection', c).eq('id', id); if (error) fail(error); local(c, id, v);
+      // Fusion faite par la base (doc_patch) : pas d'écrasement si deux personnes agissent en même temps
+      async update(o, { append = null, expect = null } = {}) {
+        const { data, error } = await client.rpc('doc_patch', { p_collection: c, p_id: id, p_patch: JSON.parse(JSON.stringify(o)), p_append: append, p_expect: expect });
+        if (error) fail(error); local(c, id, data);
       },
       async delete() { const { error } = await client.from('docs').delete().eq('collection', c).eq('id', id); if (error) fail(error); local(c, id, undefined); },
       onSnapshot(fn) { const run = () => fn(snap(id, cache[c] && cache[c].get(id))); (listeners[c] = listeners[c] || new Set()).add(run); ensure(c).then(run); return () => listeners[c].delete(run); }

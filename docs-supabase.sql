@@ -91,6 +91,121 @@ create policy docs_update on public.docs for update to authenticated
 -- Suppression : service HSE uniquement
 create policy docs_delete on public.docs for delete to authenticated using (is_hse());
 
+-- 3 bis. Contrôles d'écriture : auteur, champs protégés, historique --------
+-- Champs qu'un opérateur peut changer sur un élément existant (le reste est réservé au service HSE).
+create or replace function public.docs_editable(p_collection text) returns text[]
+language sql immutable set search_path = '' as $$
+  select case p_collection
+    when 'sos'       then array['status', 'takenBy', 'takenAt', 'closedBy', 'closedAt']
+    when 'incidents' then array['status', 'statusBy', 'statusAt']
+    when 'risks'     then array['done', 'doneBy', 'doneAt']
+    when 'permits'   then array['status', 'closedBy', 'closedAt']
+    when 'stops'     then array['step', 'status', 'log']
+    when 'formation' then array['module', 'score', 'total']
+    else array[]::text[] end
+$$;
+
+-- L'auteur (by), les dates (at, …At) et les signataires (…By) sont fixés par la base,
+-- jamais par le téléphone : impossible de déclarer ou de valider au nom d'un autre.
+create or replace function public.docs_guard() returns trigger
+language plpgsql set search_path = public as $$
+declare
+  uid  text  := auth.uid()::text;
+  hse  boolean;
+  stamp jsonb := to_jsonb(to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'));
+  k text; n int; i int; e jsonb; lg jsonb;
+begin
+  if uid is null then return new; end if;   -- SQL Editor / clé service : pas de contrôle
+  hse := is_hse();
+  new.updated_by := auth.uid();
+  new.updated_at := now();
+
+  if tg_op = 'INSERT' then
+    if not hse and new.collection not in ('sos', 'incidents', 'risks', 'permits', 'stops', 'formation', 'photos') then
+      raise exception 'Réservé au service HSE' using errcode = '42501';
+    end if;
+    if new.collection = 'formation' and new.id <> uid and not hse then
+      raise exception 'Formation : uniquement la vôtre' using errcode = '42501';
+    end if;
+    if new.collection in ('sos', 'incidents', 'risks', 'permits', 'stops', 'formation') then
+      new.data := new.data || jsonb_build_object('by', uid, 'at', stamp);
+      if jsonb_typeof(new.data->'log') = 'array' then
+        select coalesce(jsonb_agg(x || jsonb_build_object('by', uid, 'at', stamp)), '[]') into lg
+        from jsonb_array_elements(new.data->'log') x;
+        new.data := jsonb_set(new.data, '{log}', lg);
+      end if;
+    end if;
+    return new;
+  end if;
+
+  -- UPDATE
+  if new.collection <> old.collection or new.id <> old.id then
+    raise exception 'Identifiant non modifiable' using errcode = '42501';
+  end if;
+  new.data := (new.data - 'by' - 'at') || jsonb_strip_nulls(jsonb_build_object('by', old.data->'by', 'at', old.data->'at'));
+  if new.collection = 'formation' then new.data := new.data || jsonb_build_object('at', stamp); end if;
+  if hse then return new; end if;
+  if new.collection = 'formation' and new.id <> uid then
+    raise exception 'Formation : uniquement la vôtre' using errcode = '42501';
+  end if;
+
+  for k in select jsonb_object_keys(old.data) union select jsonb_object_keys(new.data) loop
+    continue when k in ('by', 'at') or (old.data->k) is not distinct from (new.data->k);
+    if not (k = any(docs_editable(new.collection))) then
+      raise exception 'Champ « % » réservé au service HSE', k using errcode = '42501';
+    end if;
+    if k like '%By' then new.data := jsonb_set(new.data, array[k], to_jsonb(uid)); end if;
+    if k like '%At' then new.data := jsonb_set(new.data, array[k], stamp); end if;
+  end loop;
+
+  -- Arrêts de travail : on ajoute des étapes à l'historique, on ne le réécrit jamais
+  if new.collection = 'stops' and (old.data->'log') is distinct from (new.data->'log') then
+    n := coalesce(jsonb_array_length(case when jsonb_typeof(old.data->'log') = 'array' then old.data->'log' end), 0);
+    if coalesce(jsonb_typeof(new.data->'log'), '') <> 'array' or jsonb_array_length(new.data->'log') < n then
+      raise exception 'L''historique de l''arrêt ne peut pas être modifié' using errcode = '42501';
+    end if;
+    lg := '[]';
+    for i in 0 .. jsonb_array_length(new.data->'log') - 1 loop
+      e := new.data->'log'->i;
+      if i < n then
+        if e is distinct from old.data->'log'->i then
+          raise exception 'L''historique de l''arrêt ne peut pas être modifié' using errcode = '42501';
+        end if;
+      else
+        e := e || jsonb_build_object('by', uid, 'at', stamp);
+      end if;
+      lg := lg || jsonb_build_array(e);
+    end loop;
+    new.data := jsonb_set(new.data, '{log}', lg);
+  end if;
+  return new;
+end $$;
+drop trigger if exists docs_guard on public.docs;
+create trigger docs_guard before insert or update on public.docs
+  for each row execute function public.docs_guard();
+
+-- Mise à jour atomique : fusionne les champs sur la version en base (deux personnes
+-- qui agissent en même temps ne s'écrasent plus). p_append ajoute à une liste,
+-- p_expect refuse la modification si l'élément a changé entre-temps (« conflit »).
+create or replace function public.doc_patch(p_collection text, p_id text, p_patch jsonb,
+  p_append jsonb default null, p_expect jsonb default null) returns jsonb
+language plpgsql set search_path = public as $$
+declare cur jsonb; k text; v jsonb;
+begin
+  select data into cur from docs where collection = p_collection and id = p_id for update;
+  if not found then raise exception 'Élément introuvable ou non autorisé' using errcode = '42501'; end if;
+  if p_expect is not null and not (cur @> p_expect) then raise exception 'conflit'; end if;
+  cur := cur || coalesce(p_patch, '{}');
+  for k, v in select * from jsonb_each(coalesce(p_append, '{}')) loop
+    cur := jsonb_set(cur, array[k], coalesce(case when jsonb_typeof(cur->k) = 'array' then cur->k end, '[]') || jsonb_build_array(v));
+  end loop;
+  update docs set data = cur where collection = p_collection and id = p_id returning data into cur;
+  if not found then raise exception 'Élément introuvable ou non autorisé' using errcode = '42501'; end if;
+  return cur;
+end $$;
+revoke execute on function public.doc_patch(text, text, jsonb, jsonb, jsonb) from public, anon;
+grant  execute on function public.doc_patch(text, text, jsonb, jsonb, jsonb) to authenticated;
+
 -- 4. Temps réel (SOS et déclarations visibles instantanément) ----------------
 do $$ begin
   alter publication supabase_realtime add table public.docs;
