@@ -244,6 +244,95 @@ select id, (data->>'at')::timestamptz as date, data->>'kind' as type, data->>'eq
        (select nom from profiles p where p.id::text = d.data->>'by') as emis_par
 from docs d where collection = 'permits';
 
+-- 5 bis. Alertes SOS sur les téléphones, même application fermée (Web Push) ---
+-- Chaque SOS (création, prise en charge, clôture) appelle la fonction serveur
+-- « sos-push » (dossier supabase/functions), qui notifie tous les comptes validés.
+create extension if not exists pg_net;
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+
+-- Clés de notification (créées par la fonction à son premier appel) et secret partagé
+create table if not exists private.push_config (
+  id            int primary key default 1 check (id = 1),
+  vapid_public  text,
+  vapid_private text,
+  hook_secret   text not null default encode(extensions.gen_random_bytes(24), 'hex'),
+  function_url  text
+);
+insert into private.push_config (id) values (1) on conflict (id) do nothing;
+-- Adresse de la fonction : https://<référence du projet>.supabase.co/functions/v1/sos-push
+update private.push_config set function_url = 'https://uyocsoicjercilcxvxcg.supabase.co/functions/v1/sos-push' where function_url is null;
+
+-- Téléphones inscrits (accessibles uniquement par les fonctions ci-dessous et le serveur)
+create table if not exists public.push_subscriptions (
+  endpoint   text primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  p256dh     text not null,
+  auth       text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.push_subscriptions enable row level security;
+revoke all on public.push_subscriptions from anon, authenticated;
+
+create or replace function public.vapid_public_key() returns text
+language sql stable security definer set search_path = '' as $$
+  select vapid_public from private.push_config where id = 1
+$$;
+revoke execute on function public.vapid_public_key() from public, anon;
+grant  execute on function public.vapid_public_key() to authenticated;
+
+-- Seuls les services de notification des navigateurs sont acceptés comme adresse
+create or replace function public.push_subscribe(p_endpoint text, p_p256dh text, p_auth text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Connexion requise' using errcode = '42501'; end if;
+  if length(p_endpoint) > 1000 or p_endpoint !~ '^https://([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.apple\.com|push\.services\.mozilla\.com|notify\.windows\.com)/' then
+    raise exception 'Adresse de notification non reconnue';
+  end if;
+  insert into public.push_subscriptions (endpoint, user_id, p256dh, auth) values (p_endpoint, auth.uid(), p_p256dh, p_auth)
+  on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, created_at = now();
+end $$;
+create or replace function public.push_unsubscribe(p_endpoint text) returns void
+language sql security definer set search_path = '' as $$
+  delete from public.push_subscriptions where endpoint = p_endpoint and user_id = auth.uid()
+$$;
+revoke execute on function public.push_subscribe(text, text, text) from public, anon;
+revoke execute on function public.push_unsubscribe(text) from public, anon;
+grant  execute on function public.push_subscribe(text, text, text) to authenticated;
+grant  execute on function public.push_unsubscribe(text) to authenticated;
+
+-- Réservées à la fonction serveur (clé service_role)
+create or replace function public.push_config_get() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select to_jsonb(c) from private.push_config c where id = 1
+$$;
+create or replace function public.push_set_vapid(p_public text, p_private text) returns void
+language sql security definer set search_path = '' as $$
+  update private.push_config set vapid_public = p_public, vapid_private = p_private where id = 1 and vapid_public is null
+$$;
+revoke execute on function public.push_config_get() from public, anon, authenticated;
+revoke execute on function public.push_set_vapid(text, text) from public, anon, authenticated;
+grant  execute on function public.push_config_get() to service_role;
+grant  execute on function public.push_set_vapid(text, text) to service_role;
+
+create or replace function public.sos_push_hook() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare c private.push_config; kind text;
+begin
+  if tg_op = 'INSERT' then kind := 'new';
+  elsif (old.data->>'status') is distinct from (new.data->>'status') then kind := new.data->>'status';
+  else return null; end if;
+  select * into c from private.push_config where id = 1;
+  if c.function_url is null then return null; end if;
+  perform net.http_post(url := c.function_url, body := jsonb_build_object('id', new.id, 'kind', kind),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-vigie-hook', c.hook_secret), timeout_milliseconds := 5000);
+  return null;
+end $$;
+revoke execute on function public.sos_push_hook() from public, anon, authenticated;
+drop trigger if exists sos_push on public.docs;
+create trigger sos_push after insert or update on public.docs
+  for each row when (new.collection = 'sos') execute function public.sos_push_hook();
+
 -- 6. Données d'exemple (à remplacer par les vrais équipements du site) -------
 insert into public.docs (collection, id, data) values
 ('equip','B12','{"code":"B12","nom":"Bac B12","zone":"Parc de stockage","produit":"Brut léger","tags":["Zone ATEX 1","H₂S possible","Espace confiné"],"consignes":["Permis de pénétrer + bon de consignation","Isolement par joints pleins sur toutes les lignes","Mesure d’atmosphère en continu (O₂, explosivité, H₂S)","Surveillant extérieur et trépied de sauvetage en place"],"permis":"Permis de pénétrer + bon de consignation","exemple":true}'),

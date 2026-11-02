@@ -378,7 +378,7 @@ const VIEWS = {
   return `
   <div class="stack-s"><span class="small muted">Bonjour,</span><h1>Travaillons en sécurité aujourd’hui</h1></div>
   <a class="sos-card" href="#sos"><span class="dot">SOS</span><span><b>Alerte immédiate</b><span class="small">Prévient le poste de garde et toute l’équipe</span></span></a>
-  ${SUPA && 'Notification' in window && Notification.permission === 'default' ? '<button class="btn block" data-act="notif">Activer les alertes SOS sur ce téléphone</button>' : ''}
+  ${SUPA ? pushCard() : ''}
   <a class="stopcard" href="#stop"><span class="oct" aria-hidden="true">${stopSign(58)}</span><span><b>J’arrête le travail</b><span class="small">Droit d’arrêt : un danger ? STOP, puis les 6 étapes</span></span></a>
   ${myForm ? '' : `<a class="card" href="#formation" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;border-color:var(--accent)"><span class="badge lv-info">À faire</span><span class="grow" style="display:flex;flex-direction:column;gap:2px;flex:1"><strong class="small">Formation : droit d’arrêt de travail</strong><span class="tiny muted">10 diapositives et un quiz de 6 questions</span></span>${svg('chev',18)}</a>`}
   <div class="grid3">
@@ -403,7 +403,7 @@ const VIEWS = {
    ${deferredPrompt ? '<button class="btn primary block" style="margin-top:10px" data-act="install">Installer l’application</button>' : ''}
    <div class="stack-s small" style="margin-top:10px"><span>Ouvrez ce site dans le navigateur du téléphone, puis :</span>
    <ul><li>iPhone (Safari) : bouton Partager, puis « Sur l’écran d’accueil »</li><li>Android (Chrome) : menu ⋮, puis « Ajouter à l’écran d’accueil »</li></ul>
-   <span class="muted">Vigie s’ouvre alors comme une application. Dans cette version, les données sont enregistrées sur chaque téléphone.</span></div></details>`}`;
+   <span class="muted">Vigie s’ouvre alors comme une application. ${SUPA ? 'Sur iPhone, c’est indispensable pour recevoir les alertes SOS.' : 'Dans cette version, les données sont enregistrées sur chaque téléphone.'}</span></div></details>`}`;
  },
 
  sos() {
@@ -739,8 +739,8 @@ document.addEventListener('click', async e => {
     case 'auth-back': AUTH.step = 'email'; AUTH.msg = ''; return render(true);
     case 'auth-name': return authName();
     case 'auth-refresh': AUTH.msg = ''; return afterLogin(AUTH.session);
-    case 'logout': try { await sb.auth.signOut(); } catch {} location.hash = ''; location.reload(); return;
-    case 'notif': try { await Notification.requestPermission(); } catch {} return render(true);
+    case 'logout': try { await pushOff(); await sb.auth.signOut(); } catch {} location.hash = ''; location.reload(); return;
+    case 'notif': ui.push = 'busy'; render(true); await pushSync(true); return render(true);
     case 'member': return setMember(id, el.dataset.active === '1', el.dataset.role);
     case 'slide-go': ui.slide = +v; ui.quizResult = null; ui.quizErr = ''; render(true); window.scrollTo(0, 0); return;
     case 'slide-prev': if (ui.slide > 0) ui.slide--; return render(true);
@@ -1083,6 +1083,43 @@ function notifySos(x) {
   }
 }
 
+/* Alertes SOS même application fermée (Web Push, envoyées par la fonction serveur sos-push) */
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const b64u = s => Uint8Array.from(atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+const swReady = () => Promise.race([navigator.serviceWorker.ready, new Promise((_, rej) => setTimeout(() => rej(new Error('sw')), 8000))]);
+async function pushSync(ask) {
+  if (!sb || !pushSupported()) { ui.push = isIOS && !isStandalone ? 'ios' : 'unsupported'; return; }
+  try {
+    if (ask && Notification.permission === 'default') await Notification.requestPermission();
+    if (Notification.permission !== 'granted') { ui.push = Notification.permission === 'denied' ? 'denied' : 'off'; return; }
+    const reg = await swReady();
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const { data: key } = await sb.rpc('vapid_public_key'); if (!key) { ui.push = 'error'; return; }
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key) });
+    }
+    const j = sub.toJSON();
+    const { error } = await sb.rpc('push_subscribe', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+    ui.push = error ? 'error' : 'on';
+  } catch { ui.push = 'error'; }
+}
+async function pushOff() {
+  if (!sb || !pushSupported()) return;
+  try { const reg = await swReady(), sub = await reg.pushManager.getSubscription(); if (sub) { await sb.rpc('push_unsubscribe', { p_endpoint: sub.endpoint }); await sub.unsubscribe(); } } catch {}
+}
+function pushCard() {
+  const btn = l => `<button class="btn block" data-act="notif" ${ui.push === 'busy' ? 'disabled' : ''}>${ui.push === 'busy' ? 'Activation…' : l}</button>`;
+  switch (ui.push) {
+    case 'on': return '';
+    case 'ios': return '<div class="note info small">Pour recevoir les alertes SOS sur iPhone : installez Vigie sur l’écran d’accueil (Partager, puis « Sur l’écran d’accueil »), puis ouvrez-la depuis son icône.</div>';
+    case 'denied': return '<div class="note warn small">Les notifications sont bloquées : autorisez-les pour Vigie dans les réglages du téléphone pour recevoir les alertes SOS.</div>';
+    case 'unsupported': return '<div class="note warn small">Ce navigateur ne reçoit pas les alertes SOS. Utilisez Chrome ou Safari à jour.</div>';
+    case 'error': return '<div class="note err small">Activation des alertes SOS impossible pour l’instant.</div>' + btn('Réessayer d’activer les alertes SOS');
+    default: return btn('Activer les alertes SOS sur ce téléphone');
+  }
+}
+
 let started = false;
 function startApp() {
   if (started) return; started = true;
@@ -1117,6 +1154,7 @@ async function afterLogin(session) {
   db = makeSupaDB(sb); user = makeSupaUser(sb); assets = null; sample = null; downloads = localDownloads;
   S.me = { id: uid, name: prof.nom }; S.canEdit = prof.role === 'hse'; S.dbState = 'ready';
   startApp();
+  pushSync(false).then(() => render());
 }
 async function authSend() {
   const email = (($('#authEmail') || {}).value || AUTH.email).trim().toLowerCase();
