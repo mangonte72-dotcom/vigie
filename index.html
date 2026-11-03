@@ -172,6 +172,20 @@ li{font-size:14px}
 .present .bar2 button{min-height:44px;min-width:44px;border-radius:12px;border:1px solid #3A4860;background:#141D2C;color:#E8EDF5;font-weight:600;padding:0 14px}
 .present .zone{position:absolute;top:0;bottom:64px;width:40%;background:transparent;border:0}
 @media (prefers-reduced-motion: reduce){.hold.holding svg.ring circle{transition:none}}
+/* Planche d’étiquettes QR (impression A4) */
+#printSheet{display:none}
+@media print{
+@page{size:A4;margin:10mm}
+html,body{background:#FFFFFF!important}
+:root{padding-top:0!important}
+body>*:not(#printSheet){display:none!important}
+#printSheet{display:grid!important;grid-template-columns:repeat(3,1fr);gap:6mm}
+.plabel{break-inside:avoid;page-break-inside:avoid;border:1px dashed #9AA5B4;border-radius:3mm;padding:4mm 3mm;display:flex;flex-direction:column;align-items:center;text-align:center;gap:1.2mm;color:#0F1B2D;font-family:Arial,sans-serif}
+.plabel svg{width:44mm;height:44mm;display:block}
+.plabel strong{font-size:12pt;line-height:1.2}
+.plabel span{font-size:10pt;color:#0F1B2D}
+.plabel em{font-size:8pt;font-style:normal;color:#566578}
+}
 </style>
 <style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px)}</style>
 </head>
@@ -306,6 +320,22 @@ const ui = {
  cfgDraft:null, cfgMsg:'', eq:{code:'',nom:'',zone:'',produit:'',tags:'',consignes:'',permis:''}, eqMsg:'', confirmDel:null, copied:''
 };
 let lastEquip = lsGet('vigie.lastEquip');
+/* Liens d’étiquette : le QR code contient l’adresse de Vigie suivie de #eq=CODE.
+   Scanné avec l’appareil photo du téléphone, il ouvre directement la fiche de l’équipement.
+   Les anciennes étiquettes (texte « VIGIE:CODE ») restent lisibles par le scanner intégré. */
+const eqFromHash = h => { const m = String(h || '').match(/^#eq=([^&#]+)/i); if (!m) return null; try { return decodeURIComponent(m[1]).trim().toUpperCase() || null; } catch { return null; } };
+let pendingEq = (() => {
+  const c = eqFromHash(location.hash);
+  if (c) { try { sessionStorage.setItem('vigie.pendingEq', c); } catch {} try { history.replaceState(null, '', location.pathname + location.search + '#scanner'); } catch {} return c; }
+  try { return sessionStorage.getItem('vigie.pendingEq'); } catch { return null; }
+})();
+function takePendingEq() {
+  const c = pendingEq; if (!c) return;
+  pendingEq = null; try { sessionStorage.removeItem('vigie.pendingEq'); } catch {}
+  ui.sheet = null;
+  if (location.hash !== '#scanner') { try { history.replaceState(null, '', location.pathname + location.search + '#scanner'); } catch { location.hash = 'scanner'; } }
+  openEquip(c);
+}
 let db = null, user = null, assets = null, sample = null, downloads = null;
 const photoCache = {};
 
@@ -328,7 +358,11 @@ function render(force) {
   $('#siteName').textContent = S.cfg.siteName ? S.cfg.siteName + ' · Seveso seuil haut' : 'Prévention des accidents';
 }
 document.addEventListener('focusout', () => setTimeout(() => { if (pending) render(); }, 0));
-window.addEventListener('hashchange', () => { render(true); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', () => {
+  const c = eqFromHash(location.hash);
+  if (c) { pendingEq = c; try { sessionStorage.setItem('vigie.pendingEq', c); } catch {} if (started && S.dbState === 'ready') return takePendingEq(); try { history.replaceState(null, '', location.pathname + location.search + '#scanner'); } catch {} }
+  render(true); window.scrollTo(0, 0);
+});
 
 function renderTabs(r) {
   const t = [['accueil','Accueil','home'],['risques','Risques','risk'],['scanner','Scanner','scan'],['declarer','Déclarer','pen'],['urgences','Urgences','phone']];
@@ -573,7 +607,8 @@ const VIEWS = {
     <div class="field"><label for="ePerm">Permis requis</label><input class="input" id="ePerm" data-bind="eq.permis" value="${esc(q.permis)}" placeholder="Permis de pénétrer + bon de consignation"></div>
     ${ui.eqMsg ? `<div class="note ${ui.eqMsg.startsWith('✓') ? 'ok' : 'err'} small" role="status">${esc(ui.eqMsg.replace('✓ ', ''))}</div>` : ''}
     <div class="chips"><button class="btn primary" data-act="eq-save">${q._edit ? 'Enregistrer' : 'Ajouter l’équipement'}</button>${q._edit ? '<button class="btn" data-act="eq-cancel">Annuler</button>' : ''}</div></div>
-   <div class="stack-s"><h2>Équipements et étiquettes QR</h2><span class="small muted">Téléchargez l’étiquette et collez-la sur l’équipement.</span>
+   <div class="stack-s"><h2>Équipements et étiquettes QR</h2><span class="small muted">Imprimez les étiquettes et collez-les sur les équipements. Scannées avec l’appareil photo du téléphone, elles ouvrent directement la fiche dans Vigie.</span>
+    ${S.equip.length ? `<button class="btn primary" data-act="eq-print">Imprimer toutes les étiquettes (${S.equip.length})</button><span class="tiny muted">Planche A4, 3 étiquettes par ligne. Pour un PDF, choisissez « Enregistrer au format PDF » comme imprimante.</span>` : ''}
     ${S.equip.map(e => `<div class="card" style="display:flex;gap:12px;align-items:flex-start"><img class="qr" src="${qrUrl(e.code)}" alt="QR code de ${esc(e.nom)}"><div class="stack-s" style="flex:1;min-width:0"><strong>${esc(e.nom)} <span class="badge lv-info">${esc(e.code)}</span></strong><span class="tiny muted">${esc(e.zone || '')}${e.exemple ? ' · exemple' : ''}</span>
      <div class="chips">${downloads ? `<button class="btn sm" data-act="eq-dl" data-v="${esc(e.code)}">Étiquette PNG</button>` : ''}<button class="btn sm" data-act="eq-edit" data-v="${esc(e.code)}">Modifier</button><button class="btn sm" data-act="eq-del" data-v="${esc(e.code)}" style="${ui.confirmDel === e.code ? 'background:var(--danger);color:var(--danger-on);border-color:var(--danger)' : ''}">${ui.confirmDel === e.code ? 'Confirmer la suppression' : 'Supprimer'}</button></div></div></div>`).join('') || '<div class="card empty">Aucun équipement.</div>'}</div>${accountSection()}`;
  }
@@ -670,7 +705,26 @@ function equipSheet(code) {
    ${e.permis ? `<div class="note info small"><strong>Permis requis :</strong> ${esc(e.permis)}</div>` : ''}
    <div class="grid2"><a class="btn primary" href="#permis" data-act="to-permit" data-v="${esc(e.code)}">Check-list permis</a><a class="btn" href="#declarer" data-act="to-decl" data-v="${esc(e.code)}">Déclarer ici</a></div>`;
 }
-function qrUrl(code) { try { const q = qrcode(0, 'M'); q.addData('VIGIE:' + code); q.make(); return q.createDataURL(4, 2); } catch { return ''; } }
+function labelLink(code) { return location.origin + location.pathname.replace(/index\.html$/, '') + '#eq=' + encodeURIComponent(code); }
+function qrCode(code) { const q = qrcode(0, 'M'); q.addData(labelLink(code)); q.make(); return q; }
+function qrUrl(code) { try { return qrCode(code).createDataURL(4, 2); } catch { return ''; } }
+/* Texte lu dans un QR code → code équipement (nouveau lien …#eq=CODE ou ancien « VIGIE:CODE ») */
+function codeFromQr(text) {
+  const t = String(text || '').trim();
+  const m = t.match(/[#?&]eq=([^&#\s]+)/i);
+  if (m) { try { return decodeURIComponent(m[1]).trim().toUpperCase(); } catch { return m[1].trim().toUpperCase(); } }
+  return t.replace(/^VIGIE:/i, '').trim().toUpperCase();
+}
+function printLabels() {
+  const list = S.equip.slice(); if (!list.length) return;
+  const old = document.getElementById('printSheet'); if (old) old.remove();
+  const box = document.createElement('div'); box.id = 'printSheet'; box.setAttribute('aria-hidden', 'true');
+  box.innerHTML = list.map(e => { let svgTag = ''; try { svgTag = qrCode(e.code).createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch {} return `<div class="plabel">${svgTag}<strong>${esc(e.nom || e.code)}</strong><span>Code ${esc(e.code)}${e.zone ? ' · ' + esc(e.zone) : ''}</span><em>Vigie · scannez avant d’intervenir</em></div>`; }).join('');
+  document.body.appendChild(box);
+  const done = () => { window.removeEventListener('afterprint', done); box.remove(); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => window.print(), 60);
+}
 
 /* ---------- Actions ---------- */
 function setPath(obj, path, v) { const k = path.split('.'); let o = obj; for (let i = 0; i < k.length - 1; i++) o = o[k[i]]; o[k[k.length - 1]] = v; }
@@ -732,6 +786,7 @@ document.addEventListener('click', async e => {
     case 'eq-edit': { const q = S.equip.find(x => x.code === v); if (q) ui.eq = { _edit: true, code: q.code, nom: q.nom || '', zone: q.zone || '', produit: q.produit || '', tags: (q.tags || []).join(', '), consignes: (q.consignes || []).join('\n'), permis: q.permis || '' }; ui.eqMsg = ''; render(true); window.scrollTo(0, 0); return; }
     case 'eq-del': if (ui.confirmDel !== v) { ui.confirmDel = v; return render(true); } ui.confirmDel = null; return guard(async () => { need(); await db.doc('equip/' + v).delete(); });
     case 'eq-dl': return downloadLabel(v);
+    case 'eq-print': return printLabels();
     case 'auth-pass': return authPass();
     case 'pw-save': return setPassword();
     case 'auth-send': return authSend();
@@ -887,7 +942,7 @@ async function decodeQr(file) {
     }
     ui.scanBusy = false;
     if (!found) { ui.scanMsg = 'Aucun QR code lisible sur la photo. Rapprochez-vous et évitez les reflets, ou saisissez le code.'; return render(true); }
-    const code = found.replace(/^VIGIE:/i, '').trim().toUpperCase();
+    const code = codeFromQr(found);
     return openEquip(code);
   } catch { ui.scanBusy = false; ui.scanMsg = 'La lecture du QR code a échoué. Saisissez le code de l’équipement.'; render(true); }
 }
@@ -914,13 +969,15 @@ async function saveEquip() {
 async function downloadLabel(code) {
   const e = S.equip.find(x => x.code === code); if (!e || !downloads) return;
   try {
-    const q = qrcode(0, 'M'); q.addData('VIGIE:' + code); q.make();
+    const q = qrCode(code);
     const n = q.getModuleCount(), cell = 12, pad = 48, qs = n * cell, W = qs + pad * 2, H = qs + pad * 2 + 120;
     const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
     g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, W, H); g.fillStyle = '#0F1B2D';
     for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) g.fillRect(pad + k * cell, pad + r * cell, cell, cell);
-    g.textAlign = 'center'; g.font = '800 34px Manrope, sans-serif'; g.fillText(e.nom, W / 2, qs + pad + 56);
-    g.font = '500 22px Inter, sans-serif'; g.fillStyle = '#566578'; g.fillText('Vigie · code ' + code + ' · scannez avant d’intervenir', W / 2, qs + pad + 92);
+    const fit = (txt, weight, size, family) => { let s = size; do { g.font = weight + ' ' + s + 'px ' + family; } while (g.measureText(txt).width > W - 32 && --s > 12); };
+    g.textAlign = 'center'; fit(e.nom, 800, 34, 'Manrope, sans-serif'); g.fillText(e.nom, W / 2, qs + pad + 56);
+    const sub = 'Vigie · code ' + code + ' · scannez avant d’intervenir';
+    g.fillStyle = '#566578'; fit(sub, 500, 22, 'Inter, sans-serif'); g.fillText(sub, W / 2, qs + pad + 92);
     const blob = await new Promise(r => c.toBlob(r, 'image/png'));
     await downloads.save({ filename: 'Etiquette-' + code + '.png', data: blob });
   } catch {}
@@ -1137,7 +1194,7 @@ function startApp() {
   db.collection('permits').orderBy('at', 'desc').limit(100).onSnapshot(s => { S.permits = docs(s); render(); });
   db.collection('stops').orderBy('at', 'desc').limit(100).onSnapshot(s => { S.stops = docs(s); render(); });
   db.collection('formation').onSnapshot(s => { S.formation = docs(s); render(); });
-  db.collection('equip').onSnapshot(s => { S.equip = docs(s).sort((a, b) => String(a.code).localeCompare(String(b.code))); render(); });
+  db.collection('equip').onSnapshot(s => { S.equip = docs(s).sort((a, b) => String(a.code).localeCompare(String(b.code))); if (pendingEq) return takePendingEq(); render(); });
   render(true);
 }
 
