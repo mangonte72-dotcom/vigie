@@ -452,7 +452,8 @@ const VIEWS = {
    ${deferredPrompt ? '<button class="btn primary block" style="margin-top:10px" data-act="install">Installer l’application</button>' : ''}
    <div class="stack-s small" style="margin-top:10px"><span>Ouvrez ce site dans le navigateur du téléphone, puis :</span>
    <ul><li>iPhone (Safari) : bouton Partager, puis « Sur l’écran d’accueil »</li><li>Android (Chrome) : menu ⋮, puis « Ajouter à l’écran d’accueil »</li></ul>
-   <span class="muted">TamisVigie s’ouvre alors comme une application. ${SUPA ? 'Sur iPhone, c’est indispensable pour recevoir les alertes SOS.' : 'Dans cette version, les données sont enregistrées sur chaque téléphone.'}</span></div></details>`}`;
+   <span class="muted">TamisVigie s’ouvre alors comme une application. ${SUPA ? 'Sur iPhone, c’est indispensable pour recevoir les alertes SOS.' : 'Dans cette version, les données sont enregistrées sur chaque téléphone.'}</span></div></details>`}
+  ${rdvCard('Une question, un besoin de formation ou de paramétrage ? Prenez rendez-vous avec l’équipe Tamis AI.', 'Prendre rendez-vous')}`;
  },
 
  sos() {
@@ -1307,6 +1308,12 @@ function accountSection() {
   }
   return h;
 }
+/* Prise de rendez-vous avec Tamis AI (Calendly) — lien modifiable ici */
+const RDV_URL = 'https://calendly.com/mangonte72/30min';
+function rdvCard(texte, bouton) {
+  if (!RDV_URL) return '';
+  return `<div class="card stack-s"><strong>Rendez-vous avec Tamis AI</strong><span class="small muted">${esc(texte)}</span><a class="btn primary block" href="${esc(RDV_URL)}" target="_blank" rel="noopener">${esc(bouton)}</a></div>`;
+}
 function authView() {
   const A = AUTH;
   const msg = A.msg ? `<div class="note ${/impossible|incorrect|invalide|refus|Trop|non confirmée|Saisissez/.test(A.msg) ? 'err' : 'info'} small" role="status">${esc(A.msg)}</div>` : '';
@@ -1317,7 +1324,8 @@ function authView() {
   else body = `<div class="note warn">Votre compte est en attente de validation par le service HSE. Prévenez votre responsable sécurité, puis réessayez.</div>${msg}<button class="btn primary block" data-act="auth-refresh">J’ai été validé, réessayer</button><button class="btn ghost" data-act="logout">Se déconnecter</button>`;
   return `<div class="stack-s" style="padding-top:12px"><h1>Connexion à TamisVigie</h1><span class="small muted">Accès réservé au personnel du site et aux entreprises intervenantes.</span></div>
    <div class="card stack">${body}</div>
-   <div class="stack-s"><h2>Urgence ?</h2><span class="small muted">Pas besoin de vous connecter pour appeler.</span>${numbersCard()}</div>`;
+   <div class="stack-s"><h2>Urgence ?</h2><span class="small muted">Pas besoin de vous connecter pour appeler.</span>${numbersCard()}</div>
+   ${rdvCard('Vous découvrez TamisVigie ? Réservez une démonstration de 30 minutes en visio.', 'Prendre rendez-vous pour une démo')}`;
 }
 
 (async () => {
