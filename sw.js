@@ -1,6 +1,6 @@
 /* Vigie – service worker : ouverture hors ligne, mises à jour, notifications SOS.
    Changez VERSION à chaque mise à jour des fichiers pour que les téléphones la récupèrent. */
-const VERSION = 'vigie-v10';
+const VERSION = 'vigie-v11';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './vendor/jsQR.js', './vendor/qrcode.js', './vendor/supabase.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
   ...Array.from({ length: 10 }, (_, i) => './slides/slide-' + String(i + 1).padStart(2, '0') + '.jpg')];
@@ -38,8 +38,10 @@ self.addEventListener('push', e => {
 });
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  // SOS → accueil ; déclaration → la fiche de l'événement dans le journal (#inc=ID)
+  const url = (e.notification.data && e.notification.data.url) || './index.html#accueil';
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-    for (const c of list) { if ('focus' in c) { c.navigate && c.navigate('./index.html#accueil'); return c.focus(); } }
-    return self.clients.openWindow('./index.html#accueil');
+    for (const c of list) { if ('focus' in c) { c.postMessage({ type: 'vigie-open', url }); return c.focus(); } }
+    return self.clients.openWindow(url);
   }));
 });

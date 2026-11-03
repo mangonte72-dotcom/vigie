@@ -333,6 +333,22 @@ drop trigger if exists sos_push on public.docs;
 create trigger sos_push after insert or update on public.docs
   for each row when (new.collection = 'sos') execute function public.sos_push_hook();
 
+-- Nouvelle déclaration d'événement → notification aux comptes HSE (même fonction sos-push)
+create or replace function public.incident_push_hook() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare c private.push_config;
+begin
+  select * into c from private.push_config where id = 1;
+  if c.function_url is null then return null; end if;
+  perform net.http_post(url := c.function_url, body := jsonb_build_object('id', new.id, 'kind', 'new', 'collection', 'incidents'),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-vigie-hook', c.hook_secret), timeout_milliseconds := 5000);
+  return null;
+end $$;
+revoke execute on function public.incident_push_hook() from public, anon, authenticated;
+drop trigger if exists incident_push on public.docs;
+create trigger incident_push after insert on public.docs
+  for each row when (new.collection = 'incidents') execute function public.incident_push_hook();
+
 -- 6. Données d'exemple (à remplacer par les vrais équipements du site) -------
 insert into public.docs (collection, id, data) values
 ('equip','B12','{"code":"B12","nom":"Bac B12","zone":"Parc de stockage","produit":"Brut léger","tags":["Zone ATEX 1","H₂S possible","Espace confiné"],"consignes":["Permis de pénétrer + bon de consignation","Isolement par joints pleins sur toutes les lignes","Mesure d’atmosphère en continu (O₂, explosivité, H₂S)","Surveillant extérieur et trépied de sauvetage en place"],"permis":"Permis de pénétrer + bon de consignation","exemple":true}'),

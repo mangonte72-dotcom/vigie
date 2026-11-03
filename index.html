@@ -358,10 +358,25 @@ function render(force) {
   $('#siteName').textContent = S.cfg.siteName ? S.cfg.siteName + ' · Seveso seuil haut' : 'Prévention des accidents';
 }
 document.addEventListener('focusout', () => setTimeout(() => { if (pending) render(); }, 0));
+/* Notification de déclaration : #inc=ID ouvre cette déclaration dans le journal */
+function openIncFromHash() {
+  const m = String(location.hash || '').match(/^#inc=([^&#]+)/i); if (!m) return false;
+  let id = null; try { id = decodeURIComponent(m[1]); } catch {} if (!id) return false;
+  ui.openInc = id; ui.incFilter = 'all';
+  try { history.replaceState(null, '', location.pathname + location.search + '#evenements'); } catch {}
+  return true;
+}
+openIncFromHash();
 window.addEventListener('hashchange', () => {
   const c = eqFromHash(location.hash);
   if (c) { pendingEq = c; try { sessionStorage.setItem('vigie.pendingEq', c); } catch {} if (started && S.dbState === 'ready') return takePendingEq(); try { history.replaceState(null, '', location.pathname + location.search + '#scanner'); } catch {} }
+  openIncFromHash();
   render(true); window.scrollTo(0, 0);
+});
+// Toucher une notification alors que Vigie est déjà ouverte : le service worker indique quoi afficher
+if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => {
+  const d = e.data || {}; if (d.type !== 'vigie-open' || !d.url) return;
+  try { const h = new URL(d.url, location.href).hash; if (h && h !== location.hash) location.hash = h; else render(true); } catch {}
 });
 
 function renderTabs(r) {
@@ -1173,7 +1188,7 @@ function pushCard() {
     case 'denied': return '<div class="note warn small">Les notifications sont bloquées : autorisez-les pour Vigie dans les réglages du téléphone pour recevoir les alertes SOS.</div>';
     case 'unsupported': return '<div class="note warn small">Ce navigateur ne reçoit pas les alertes SOS. Utilisez Chrome ou Safari à jour.</div>';
     case 'error': return '<div class="note err small">Activation des alertes SOS impossible pour l’instant.</div>' + btn('Réessayer d’activer les alertes SOS');
-    default: return btn('Activer les alertes SOS sur ce téléphone');
+    default: return btn(S.canEdit ? 'Activer les alertes SOS et déclarations sur ce téléphone' : 'Activer les alertes SOS sur ce téléphone');
   }
 }
 
