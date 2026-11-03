@@ -53,7 +53,7 @@ Deno.serve(async req => {
     allowed = new Set((people || []).filter(p => p.active && p.role === 'hse').map(p => p.id));
   } else {
     const where = s.equipName || s.lieu || 'position non précisée', label = TYPES[s.type] || 'Alerte';
-    if (kind === 'new') { title = `🚨 SOS : ${label}`; body = `${where} · déclenché par ${name(s.by)}. Ouvrez Vigie.`; actor = s.by; urgent = true; }
+    if (kind === 'new') { title = `🚨 SOS : ${label}`; body = `${where} · déclenché par ${name(s.by)}. Ouvrez TamisVigie.`; actor = s.by; urgent = true; }
     else if (kind === 'prise') { title = `SOS pris en charge : ${label}`; body = `${name(s.takenBy)} s’en occupe · ${where}`; actor = s.takenBy; }
     else if (kind === 'close') { title = `SOS clôturé : ${label}`; body = `Clôturé par ${name(s.closedBy)} · ${where}`; actor = s.closedBy; }
     else return Response.json({ ok: true, skipped: kind });

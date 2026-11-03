@@ -1,6 +1,6 @@
 {
-  "name": "Vigie – Prévention des accidents",
-  "short_name": "Vigie",
+  "name": "TamisVigie – Prévention des accidents",
+  "short_name": "TamisVigie",
   "description": "SOS, déclarations avec photo, QR des équipements, check-lists permis et registre des risques.",
   "lang": "fr",
   "start_url": "./index.html",
